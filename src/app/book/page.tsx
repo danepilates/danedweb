@@ -120,15 +120,15 @@ export default async function BookPage({
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
       <h1 className="mb-4 font-serif text-3xl font-semibold text-charcoal">
-        Book a session
+        Reservar una sesión
       </h1>
 
       {confirmedBooking && (
         <div className="mb-6 rounded-lg border border-gold/40 bg-gold/10 px-4 py-3">
-          <p className="mb-1 font-medium text-charcoal">Session booked!</p>
+          <p className="mb-1 font-medium text-charcoal">¡Sesión reservada!</p>
           <p className="mb-3 text-sm text-charcoal/70">
             {confirmedBooking.services?.name} —{" "}
-            {formatDateHuman(confirmedBooking.session_date)} at{" "}
+            {formatDateHuman(confirmedBooking.session_date)} a las{" "}
             {formatTime(confirmedBooking.start_time)}
           </p>
           <div className="flex flex-wrap gap-2">
@@ -136,7 +136,7 @@ export default async function BookPage({
               href={`/calendar/${confirmedBooking.id}`}
               className="rounded-full border border-gold bg-white px-3 py-1.5 text-sm font-medium text-charcoal hover:bg-gold/10"
             >
-              Add to calendar
+              Agregar al calendario
             </a>
           </div>
         </div>
@@ -173,13 +173,13 @@ export default async function BookPage({
       <div className="mt-6 flex flex-col gap-2">
         {blockedDate ? (
           <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            The studio is closed on {formatDateHuman(selectedDate)}
+            El estudio está cerrado el {formatDateHuman(selectedDate)}
             {blockedDate.reason ? ` — ${blockedDate.reason}` : ""}.
           </p>
         ) : (
           slots.length === 0 && (
             <p className="text-sm text-charcoal/50">
-              No sessions scheduled for this day.
+              No hay sesiones programadas para este día.
             </p>
           )
         )}
@@ -191,8 +191,8 @@ export default async function BookPage({
           const myBooking = bookedForSlot.find((b) => b.user_id === user.id);
           const inPast = isSlotInPast(selectedDate, slot.start_time);
 
-          let statusLabel = spotsLeft > 0 ? `${spotsLeft} spot${spotsLeft === 1 ? "" : "s"} left` : "Fully booked";
-          if (inPast && !myBooking) statusLabel = "Already started";
+          let statusLabel = spotsLeft > 0 ? `${spotsLeft} cupo${spotsLeft === 1 ? "" : "s"} disponible${spotsLeft === 1 ? "" : "s"}` : "Sin cupos";
+          if (inPast && !myBooking) statusLabel = "Ya comenzó";
 
           return (
             <div
@@ -215,7 +215,7 @@ export default async function BookPage({
                     type="submit"
                     className="min-h-11 rounded-full border border-charcoal/20 px-4 text-sm text-charcoal hover:border-charcoal hover:bg-charcoal/5"
                   >
-                    Cancel
+                    Cancelar
                   </button>
                 </form>
               ) : (
@@ -230,7 +230,7 @@ export default async function BookPage({
                     disabled={spotsLeft <= 0 || inPast}
                     className="min-h-11 rounded-full bg-charcoal px-4 text-sm text-white transition-colors hover:bg-gold hover:text-charcoal disabled:cursor-not-allowed disabled:bg-charcoal/20 disabled:hover:text-white"
                   >
-                    Book
+                    Reservar
                   </button>
                 </form>
               )}

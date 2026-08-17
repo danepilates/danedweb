@@ -42,15 +42,15 @@ export default async function AdminBookingsPage() {
     <div className="mx-auto max-w-3xl px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-serif text-3xl font-semibold text-charcoal">
-          Upcoming bookings
+          Próximas reservas
         </h1>
         <Link href="/admin" className="text-sm text-charcoal/70 underline decoration-gold decoration-2 underline-offset-2 hover:text-charcoal">
-          Back to schedule
+          Volver al horario
         </Link>
       </div>
 
       {bookings.length === 0 && (
-        <p className="text-sm text-charcoal/50">No upcoming bookings.</p>
+        <p className="text-sm text-charcoal/50">No hay próximas reservas.</p>
       )}
 
       <div className="flex flex-col gap-2">
@@ -60,7 +60,7 @@ export default async function AdminBookingsPage() {
               {b.session_date} · {formatTime(b.start_time)} · {b.services?.name}
             </p>
             <p className="text-charcoal/50">
-              {b.profiles?.full_name ?? "Unknown"}
+              {b.profiles?.full_name ?? "Desconocido"}
               {b.profiles?.phone ? ` · ${b.profiles.phone}` : ""}
             </p>
           </div>

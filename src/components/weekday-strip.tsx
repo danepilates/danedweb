@@ -2,7 +2,7 @@ import Link from "next/link";
 
 // day_of_week values stay 0=Sunday..6=Saturday (matches the DB and
 // Date.getUTCDay()) — only the display order changes to start on Monday.
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_LABELS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 export function WeekdayStrip({
@@ -32,7 +32,7 @@ export function WeekdayStrip({
           >
             <span className="font-medium">{label}</span>
             <span className={`text-xs ${isSelected ? "opacity-80" : "text-charcoal/40"}`}>
-              {count > 0 ? `${count} session${count === 1 ? "" : "s"}` : "—"}
+              {count > 0 ? `${count} sesión${count === 1 ? "" : "es"}` : "—"}
             </span>
           </Link>
         );

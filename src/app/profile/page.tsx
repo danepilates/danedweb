@@ -46,20 +46,21 @@ export default async function ProfilePage({
   return (
     <div className="mx-auto max-w-xl px-4 py-6">
       <h1 className="mb-2 font-serif text-3xl font-semibold text-charcoal">
-        Your profile
+        Tu perfil
       </h1>
       <p className="mb-6 text-sm text-charcoal/50">
-        This information helps your instructor plan sessions safely.
+        Esta información ayuda a tu instructor a planificar las sesiones de
+        forma segura.
       </p>
 
       {required && (
         <p className="mb-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Please complete your profile before booking a session.
+          Completa tu perfil antes de reservar una sesión.
         </p>
       )}
       {saved && (
         <p className="mb-4 rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-          Profile saved.
+          Perfil guardado.
         </p>
       )}
       {error && (
@@ -74,14 +75,14 @@ export default async function ProfilePage({
         }`}
       >
         <div>
-          <p className="text-sm text-charcoal/50">Membership</p>
+          <p className="text-sm text-charcoal/50">Membresía</p>
           <p className="font-serif text-lg font-semibold text-charcoal">
-            {planStatus === "full" ? "Full Plan" : "Free"}
+            {planStatus === "full" ? "Plan Full" : "Gratis"}
           </p>
         </div>
         {profile?.plan_end_date && (
           <p className="text-sm text-charcoal/50">
-            {planStatus === "full" ? "Active until" : "Expired on"}{" "}
+            {planStatus === "full" ? "Activo hasta" : "Expiró el"}{" "}
             {formatDateHuman(profile.plan_end_date)}
           </p>
         )}
@@ -93,41 +94,41 @@ export default async function ProfilePage({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profile.avatar_url}
-              alt="Profile photo"
+              alt="Foto de perfil"
               className="h-16 w-16 rounded-full border-2 border-gold object-cover"
             />
           ) : (
             <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-charcoal/20 text-xs text-charcoal/40">
-              No photo
+              Sin foto
             </div>
           )}
           <label className="text-sm">
-            <span className="mb-1 block text-charcoal/50">Profile photo</span>
+            <span className="mb-1 block text-charcoal/50">Foto de perfil</span>
             <input type="file" name="avatar" accept="image/*" className="text-sm" />
           </label>
         </div>
 
         <label className="flex flex-col gap-1 text-sm">
-          Username
+          Usuario
           <input
             name="username"
             type="text"
             defaultValue={profile?.username ?? ""}
             pattern={USERNAME_PATTERN}
-            title="3-20 characters: letters and numbers only"
+            title="3-20 caracteres: solo letras y números"
             autoCapitalize="off"
             autoCorrect="off"
             required
             className="rounded-lg border border-charcoal/20 px-3 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
           />
           <span className="text-xs font-normal text-charcoal/50">
-            Used to log in instead of your email.
+            Se usa para iniciar sesión en lugar de tu correo.
           </span>
         </label>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            Full name
+            Nombre completo
             <input
               name="fullName"
               defaultValue={profile?.full_name ?? ""}
@@ -136,7 +137,7 @@ export default async function ProfilePage({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            Phone
+            Teléfono
             <input
               name="phone"
               type="tel"
@@ -149,7 +150,7 @@ export default async function ProfilePage({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <label className="flex flex-col gap-1 text-sm">
-            Age
+            Edad
             <input
               name="age"
               type="number"
@@ -160,7 +161,7 @@ export default async function ProfilePage({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            Height (cm)
+            Estatura (cm)
             <input
               name="heightCm"
               type="number"
@@ -172,7 +173,7 @@ export default async function ProfilePage({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            Weight (kg)
+            Peso (kg)
             <input
               name="weightKg"
               type="number"
@@ -186,36 +187,36 @@ export default async function ProfilePage({
         </div>
 
         <label className="flex flex-col gap-1 text-sm">
-          Medical conditions / sickness
+          Condiciones médicas / enfermedades
           <textarea
             name="medicalConditions"
             defaultValue={profile?.medical_conditions ?? ""}
             required
-            placeholder="Write 'None' if not applicable"
+            placeholder="Escribe 'Ninguna' si no aplica"
             className="rounded-lg border border-charcoal/20 px-3 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
             rows={2}
           />
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Injuries or fractures
+          Lesiones o fracturas
           <textarea
             name="injuries"
             defaultValue={profile?.injuries ?? ""}
             required
-            placeholder="Write 'None' if not applicable"
+            placeholder="Escribe 'Ninguna' si no aplica"
             className="rounded-lg border border-charcoal/20 px-3 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
             rows={2}
           />
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Allergies
+          Alergias
           <textarea
             name="allergies"
             defaultValue={profile?.allergies ?? ""}
             required
-            placeholder="Write 'None' if not applicable"
+            placeholder="Escribe 'Ninguna' si no aplica"
             className="rounded-lg border border-charcoal/20 px-3 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
             rows={2}
           />
@@ -233,8 +234,8 @@ export default async function ProfilePage({
                     required={field.required}
                     className="rounded-lg border border-charcoal/20 px-3 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
                   >
-                    <option value="">Select…</option>
-                    <option value="true">Yes</option>
+                    <option value="">Selecciona…</option>
+                    <option value="true">Sí</option>
                     <option value="false">No</option>
                   </select>
                 ) : (
@@ -255,7 +256,7 @@ export default async function ProfilePage({
           type="submit"
           className="mt-2 rounded-full bg-charcoal px-4 py-3 text-base text-white transition-colors hover:bg-gold hover:text-charcoal"
         >
-          Save profile
+          Guardar perfil
         </button>
       </form>
     </div>

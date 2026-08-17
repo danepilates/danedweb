@@ -34,16 +34,16 @@ export default async function AdminBlockedDatesPage({
     <div className="mx-auto max-w-xl px-4 py-6">
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-serif text-3xl font-semibold text-charcoal">
-          Blocked dates
+          Fechas bloqueadas
         </h1>
         <Link href="/admin" className="text-sm text-charcoal/70 underline decoration-gold decoration-2 underline-offset-2 hover:text-charcoal">
-          Back to schedule
+          Volver al horario
         </Link>
       </div>
       <p className="mb-6 text-sm text-charcoal/50">
-        Close the studio on a specific date — holidays, maintenance, etc.
-        Blocks booking for every service that day, regardless of the
-        recurring weekly schedule.
+        Cierra el estudio en una fecha específica — feriados, mantenimiento,
+        etc. Bloquea las reservas de todos los servicios ese día, sin
+        importar el horario semanal habitual.
       </p>
 
       {error && (
@@ -57,7 +57,7 @@ export default async function AdminBlockedDatesPage({
         className="mb-6 flex flex-wrap items-end gap-2 rounded-lg border border-dashed border-gold/40 bg-gold/5 p-3"
       >
         <label className="flex flex-col text-xs text-charcoal/50">
-          Date
+          Fecha
           <input
             type="date"
             name="date"
@@ -67,11 +67,11 @@ export default async function AdminBlockedDatesPage({
           />
         </label>
         <label className="flex flex-col text-xs text-charcoal/50">
-          Reason (optional)
+          Motivo (opcional)
           <input
             type="text"
             name="reason"
-            placeholder="e.g. Holiday"
+            placeholder="ej. Feriado"
             className="rounded-lg border border-charcoal/20 px-2 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
           />
         </label>
@@ -79,7 +79,7 @@ export default async function AdminBlockedDatesPage({
           type="submit"
           className="min-h-10 rounded-full bg-charcoal px-4 text-sm text-white transition-colors hover:bg-gold hover:text-charcoal"
         >
-          Block date
+          Bloquear fecha
         </button>
       </form>
 
@@ -99,13 +99,13 @@ export default async function AdminBlockedDatesPage({
                 type="submit"
                 className="min-h-9 px-2 text-red-600 underline"
               >
-                Unblock
+                Desbloquear
               </button>
             </form>
           </div>
         ))}
         {(blockedDates ?? []).length === 0 && (
-          <p className="text-sm text-charcoal/50">No blocked dates.</p>
+          <p className="text-sm text-charcoal/50">No hay fechas bloqueadas.</p>
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_LABELS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 
 function studioNowParts(): { date: string; time: string } {
   const timeZone = process.env.STUDIO_TIMEZONE || "UTC";
@@ -56,18 +56,18 @@ export function formatDayLabel(dateStr: string): string {
 }
 
 const MONTH_LABELS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "ene", "feb", "mar", "abr", "may", "jun",
+  "jul", "ago", "sep", "oct", "nov", "dic",
 ];
 
 export function formatDateHuman(dateStr: string): string {
   const [, m, d] = dateStr.split("-").map(Number);
-  return `${formatDayLabel(dateStr)}, ${MONTH_LABELS[m - 1]} ${d}`;
+  return `${formatDayLabel(dateStr)}, ${d} de ${MONTH_LABELS[m - 1]}`;
 }
 
 export function formatTime(time: string): string {
   const [h, m] = time.split(":").map(Number);
-  const period = h >= 12 ? "PM" : "AM";
+  const period = h >= 12 ? "p. m." : "a. m.";
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   return m === 0 ? `${hour12} ${period}` : `${hour12}:${String(m).padStart(2, "0")} ${period}`;
 }

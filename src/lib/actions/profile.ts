@@ -71,7 +71,7 @@ export async function updateOwnProfile(formData: FormData) {
   const username = normalizeUsername(String(formData.get("username") ?? ""));
   if (!isValidUsername(username)) {
     redirect(
-      `/profile?error=${encodeURIComponent("Username must be 3-20 characters: letters and numbers only")}`,
+      `/profile?error=${encodeURIComponent("El usuario debe tener 3-20 caracteres: solo letras y números")}`,
     );
   }
 
@@ -84,7 +84,7 @@ export async function updateOwnProfile(formData: FormData) {
     .maybeSingle();
 
   if (existing) {
-    redirect(`/profile?error=${encodeURIComponent("That username is already taken")}`);
+    redirect(`/profile?error=${encodeURIComponent("Ese usuario ya está en uso")}`);
   }
 
   const avatarUrl = await uploadAvatarIfPresent(supabase, user.id, formData);

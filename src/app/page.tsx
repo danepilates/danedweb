@@ -13,13 +13,13 @@ export default async function Home() {
 
       <span className="mb-4 h-2 w-2 rounded-full bg-gold" />
       <h1 className="mb-4 font-serif text-5xl font-semibold tracking-tight text-charcoal sm:text-6xl">
-        Move well.
+        Muévete bien.
         <br />
-        Eat well.
+        Come bien.
       </h1>
       <p className="mb-10 max-w-md text-charcoal/60">
-        Book Pilates and Nutrition Assistant sessions with your studio —
-        anytime, from your phone.
+        Reserva sesiones de Pilates y Asistencia Nutricional con tu estudio —
+        cuando quieras, desde tu teléfono.
       </p>
 
       {user ? (
@@ -27,7 +27,7 @@ export default async function Home() {
           href="/book"
           className="rounded-full bg-charcoal px-8 py-3 text-white transition-colors hover:bg-gold hover:text-charcoal"
         >
-          Book a session
+          Reservar una sesión
         </Link>
       ) : (
         <div className="flex gap-3">
@@ -35,13 +35,13 @@ export default async function Home() {
             href="/signup"
             className="rounded-full bg-charcoal px-8 py-3 text-white transition-colors hover:bg-gold hover:text-charcoal"
           >
-            Sign up
+            Registrarse
           </Link>
           <Link
             href="/login"
             className="rounded-full border border-charcoal/20 px-8 py-3 text-charcoal transition-colors hover:border-gold hover:text-gold"
           >
-            Log in
+            Iniciar sesión
           </Link>
         </div>
       )}

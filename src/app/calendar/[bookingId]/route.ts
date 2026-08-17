@@ -32,14 +32,14 @@ export async function GET(
 
   const booking = data as unknown as BookingRow | null;
   if (!booking) {
-    return new NextResponse("Not found", { status: 404 });
+    return new NextResponse("No encontrado", { status: 404 });
   }
 
-  const serviceName = booking.services?.name ?? "Session";
+  const serviceName = booking.services?.name ?? "Sesión";
   const ics = buildICS({
     uid: booking.id,
-    title: `${serviceName} — Pilates Studio`,
-    description: "Booked via Pilates Studio app",
+    title: `${serviceName} — Estudio de Pilates`,
+    description: "Reservado a través de la app del estudio",
     sessionDate: booking.session_date,
     startTime: booking.start_time,
     durationMinutes: booking.schedule_slots?.duration_minutes ?? 60,

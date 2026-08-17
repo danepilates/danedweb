@@ -37,13 +37,13 @@ export default async function MyBookingsPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
       <h1 className="mb-6 font-serif text-3xl font-semibold text-charcoal">
-        My bookings
+        Mis reservas
       </h1>
 
       <section className="mb-8">
-        <h2 className="mb-3 text-sm font-medium text-charcoal/50">Upcoming</h2>
+        <h2 className="mb-3 text-sm font-medium text-charcoal/50">Próximas</h2>
         {upcoming.length === 0 && (
-          <p className="text-sm text-charcoal/50">No upcoming sessions.</p>
+          <p className="text-sm text-charcoal/50">No tienes próximas sesiones.</p>
         )}
         <div className="flex flex-col gap-2">
           {upcoming.map((b) => (
@@ -66,7 +66,7 @@ export default async function MyBookingsPage() {
                   type="submit"
                   className="min-h-11 rounded-full border border-charcoal/20 px-4 text-sm text-charcoal hover:border-charcoal hover:bg-charcoal/5"
                 >
-                  Cancel
+                  Cancelar
                 </button>
               </form>
             </div>
@@ -75,9 +75,9 @@ export default async function MyBookingsPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-medium text-charcoal/50">History</h2>
+        <h2 className="mb-3 text-sm font-medium text-charcoal/50">Historial</h2>
         {past.length === 0 && (
-          <p className="text-sm text-charcoal/50">No past sessions yet.</p>
+          <p className="text-sm text-charcoal/50">Aún no hay sesiones pasadas.</p>
         )}
         <div className="flex flex-col gap-2">
           {past.map((b) => (
@@ -91,7 +91,9 @@ export default async function MyBookingsPage() {
                 </p>
                 <p className="text-sm">{formatTime(b.start_time)}</p>
               </div>
-              <span className="text-sm capitalize">{b.status}</span>
+              <span className="text-sm capitalize">
+                {b.status === "cancelled" ? "cancelada" : "reservada"}
+              </span>
             </div>
           ))}
         </div>

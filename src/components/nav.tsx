@@ -35,13 +35,13 @@ export async function Nav() {
   const links = user ? (
     <>
       <Link href="/book" className={linkClass}>
-        Book
+        Reservar
       </Link>
       <Link href="/my-bookings" className={linkClass}>
-        My bookings
+        Mis reservas
       </Link>
       <Link href="/profile" className={linkClass}>
-        Profile
+        Perfil
       </Link>
       {isAdmin && (
         <Link href="/admin" className={linkClass}>
@@ -50,20 +50,20 @@ export async function Nav() {
       )}
       <form action={signOut}>
         <button type="submit" className={`text-left ${linkClass}`}>
-          Sign out
+          Cerrar sesión
         </button>
       </form>
     </>
   ) : (
     <>
       <Link href="/login" className={linkClass}>
-        Log in
+        Iniciar sesión
       </Link>
       <Link
         href="/signup"
         className="rounded-full bg-charcoal px-4 py-1.5 text-white transition-colors hover:bg-gold hover:text-charcoal"
       >
-        Sign up
+        Registrarse
       </Link>
     </>
   );
@@ -73,7 +73,7 @@ export async function Nav() {
       <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
         <Link href="/" className="group flex items-baseline gap-2">
           <span className="font-serif text-2xl font-semibold tracking-wide text-charcoal">
-            Studio
+            Estudio
           </span>
           <span className="h-1.5 w-1.5 rounded-full bg-gold" />
         </Link>
@@ -94,11 +94,11 @@ export async function Nav() {
 
       {planWarningDays !== null && (
         <div className="border-t border-gold/30 bg-gold/10 px-4 py-2 text-center text-sm text-charcoal">
-          Your Full Plan{" "}
+          Tu Plan Full{" "}
           {planWarningDays === 0
-            ? "ends today"
-            : `ends in ${planWarningDays} day${planWarningDays === 1 ? "" : "s"}`}
-          . Contact the studio to renew.
+            ? "termina hoy"
+            : `termina en ${planWarningDays} día${planWarningDays === 1 ? "" : "s"}`}
+          . Contacta al estudio para renovarlo.
         </div>
       )}
     </header>

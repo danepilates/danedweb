@@ -10,7 +10,7 @@ export async function login(formData: FormData) {
   const username = normalizeUsername(String(formData.get("username") ?? ""));
   const password = String(formData.get("password") ?? "");
 
-  const genericError = "Invalid username or password";
+  const genericError = "Usuario o contraseña inválidos";
 
   const admin = createAdminClient();
   const { data: profile } = await admin
@@ -57,7 +57,7 @@ export async function signup(formData: FormData) {
 
   if (!isValidUsername(username)) {
     redirect(
-      `/signup?error=${encodeURIComponent("Username must be 3-20 characters: letters and numbers only")}`,
+      `/signup?error=${encodeURIComponent("El usuario debe tener 3-20 caracteres: solo letras y números")}`,
     );
   }
 
@@ -68,7 +68,7 @@ export async function signup(formData: FormData) {
     .maybeSingle();
 
   if (existing) {
-    redirect(`/signup?error=${encodeURIComponent("That username is already taken")}`);
+    redirect(`/signup?error=${encodeURIComponent("Ese usuario ya está en uso")}`);
   }
 
   const { data, error } = await supabase.auth.signUp({
@@ -100,7 +100,7 @@ export async function signup(formData: FormData) {
       // check above and now — roll back the auth account rather than
       // leave it stuck with no usable username.
       await admin.auth.admin.deleteUser(data.user.id);
-      redirect(`/signup?error=${encodeURIComponent("That username is already taken")}`);
+      redirect(`/signup?error=${encodeURIComponent("Ese usuario ya está en uso")}`);
     }
   }
 

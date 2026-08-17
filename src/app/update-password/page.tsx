@@ -10,7 +10,7 @@ export default async function UpdatePasswordPage({
   return (
     <div className="mx-auto flex min-h-[80vh] w-full max-w-sm flex-col justify-center px-4">
       <h1 className="mb-6 font-serif text-3xl font-semibold text-charcoal">
-        Set a new password
+        Establece una nueva contraseña
       </h1>
 
       {error && (
@@ -21,7 +21,7 @@ export default async function UpdatePasswordPage({
 
       <form action={updatePassword} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm text-charcoal">
-          New password
+          Nueva contraseña
           <input
             name="password"
             type="password"
@@ -34,7 +34,7 @@ export default async function UpdatePasswordPage({
           type="submit"
           className="mt-2 rounded-full bg-charcoal px-3 py-3 text-base text-white transition-colors hover:bg-gold hover:text-charcoal"
         >
-          Update password
+          Actualizar contraseña
         </button>
       </form>
     </div>

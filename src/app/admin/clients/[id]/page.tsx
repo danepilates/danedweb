@@ -68,21 +68,21 @@ export default async function AdminClientDetailPage({
     <div className="mx-auto max-w-xl px-4 py-6">
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-serif text-3xl font-semibold text-charcoal">
-          {client.full_name || "Client"}
+          {client.full_name || "Cliente"}
         </h1>
         <Link href="/admin/clients" className="text-sm text-charcoal/70 underline decoration-gold decoration-2 underline-offset-2 hover:text-charcoal">
-          Back to clients
+          Volver a clientes
         </Link>
       </div>
 
       {saved && (
         <p className="mb-4 rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-          Saved.
+          Guardado.
         </p>
       )}
       {reset && (
         <p className="mb-4 rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-          Password reset email sent.
+          Correo de restablecimiento enviado.
         </p>
       )}
       {error && (
@@ -98,16 +98,16 @@ export default async function AdminClientDetailPage({
             type="submit"
             className="min-h-11 rounded-full border border-charcoal/20 px-4 text-sm text-charcoal hover:border-charcoal hover:bg-charcoal/5"
           >
-            Send password reset
+            Enviar restablecimiento de contraseña
           </button>
         </form>
         <form action={deleteClient}>
           <input type="hidden" name="clientId" value={client.id} />
           <ConfirmSubmitButton
-            confirmMessage={`Delete ${client.full_name || "this client"}? This permanently removes their account, profile, and bookings.`}
+            confirmMessage={`¿Eliminar a ${client.full_name || "este cliente"}? Esto elimina permanentemente su cuenta, perfil y reservas.`}
             className="min-h-11 rounded-full border border-red-300 px-4 text-sm text-red-600 hover:bg-red-50"
           >
-            Delete client
+            Eliminar cliente
           </ConfirmSubmitButton>
         </form>
       </div>
@@ -126,13 +126,13 @@ export default async function AdminClientDetailPage({
                 : "bg-charcoal/10 text-charcoal/60"
             }`}
           >
-            {planStatus === "full" ? "Full Plan" : "Free"}
+            {planStatus === "full" ? "Plan Full" : "Gratis"}
           </span>
         </div>
 
         {client.plan_end_date && (
           <p className="mb-3 text-sm text-charcoal/50">
-            {planStatus === "full" ? "Active until" : "Expired on"}{" "}
+            {planStatus === "full" ? "Activo hasta" : "Expiró el"}{" "}
             {formatDateHuman(client.plan_end_date)}
           </p>
         )}
@@ -146,7 +146,7 @@ export default async function AdminClientDetailPage({
                 type="submit"
                 className="min-h-10 rounded-full border border-charcoal/20 px-3 text-sm text-charcoal hover:border-gold hover:bg-gold/10"
               >
-                Renew +{days}d
+                Renovar +{days}d
               </button>
             </form>
           ))}
@@ -157,7 +157,7 @@ export default async function AdminClientDetailPage({
                 type="submit"
                 className="min-h-10 rounded-full border border-red-300 px-3 text-sm text-red-600 hover:bg-red-50"
               >
-                Revert to Free
+                Volver a Gratis
               </button>
             </form>
           )}
@@ -166,7 +166,7 @@ export default async function AdminClientDetailPage({
         <form action={setClientPlan} className="flex flex-wrap items-end gap-2">
           <input type="hidden" name="clientId" value={client.id} />
           <label className="flex flex-col text-xs text-charcoal/50">
-            Start date
+            Fecha de inicio
             <input
               type="date"
               name="planStartDate"
@@ -175,7 +175,7 @@ export default async function AdminClientDetailPage({
             />
           </label>
           <label className="flex flex-col text-xs text-charcoal/50">
-            End date
+            Fecha de fin
             <input
               type="date"
               name="planEndDate"
@@ -187,7 +187,7 @@ export default async function AdminClientDetailPage({
             type="submit"
             className="min-h-10 rounded-full bg-charcoal px-4 text-sm text-white transition-colors hover:bg-gold hover:text-charcoal"
           >
-            Set custom dates
+            Establecer fechas personalizadas
           </button>
         </form>
       </section>
@@ -196,13 +196,13 @@ export default async function AdminClientDetailPage({
         <input type="hidden" name="clientId" value={client.id} />
 
         <label className="flex flex-col gap-1 text-sm">
-          Username
+          Usuario
           <input
             name="username"
             type="text"
             defaultValue={client.username ?? ""}
             pattern={USERNAME_PATTERN}
-            title="3-20 characters: letters and numbers only"
+            title="3-20 caracteres: solo letras y números"
             autoCapitalize="off"
             autoCorrect="off"
             required
@@ -212,7 +212,7 @@ export default async function AdminClientDetailPage({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            Full name
+            Nombre completo
             <input
               name="fullName"
               defaultValue={client.full_name ?? ""}
@@ -220,7 +220,7 @@ export default async function AdminClientDetailPage({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            Phone
+            Teléfono
             <input
               name="phone"
               defaultValue={client.phone ?? ""}
@@ -231,7 +231,7 @@ export default async function AdminClientDetailPage({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <label className="flex flex-col gap-1 text-sm">
-            Age
+            Edad
             <input
               name="age"
               type="number"
@@ -240,7 +240,7 @@ export default async function AdminClientDetailPage({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            Height (cm)
+            Estatura (cm)
             <input
               name="heightCm"
               type="number"
@@ -250,7 +250,7 @@ export default async function AdminClientDetailPage({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            Weight (kg)
+            Peso (kg)
             <input
               name="weightKg"
               type="number"
@@ -262,7 +262,7 @@ export default async function AdminClientDetailPage({
         </div>
 
         <label className="flex flex-col gap-1 text-sm">
-          Medical conditions / sickness
+          Condiciones médicas / enfermedades
           <textarea
             name="medicalConditions"
             defaultValue={client.medical_conditions ?? ""}
@@ -272,7 +272,7 @@ export default async function AdminClientDetailPage({
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Injuries or fractures
+          Lesiones o fracturas
           <textarea
             name="injuries"
             defaultValue={client.injuries ?? ""}
@@ -282,7 +282,7 @@ export default async function AdminClientDetailPage({
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Allergies
+          Alergias
           <textarea
             name="allergies"
             defaultValue={client.allergies ?? ""}
@@ -302,8 +302,8 @@ export default async function AdminClientDetailPage({
                     defaultValue={valueByField.get(field.id) ?? ""}
                     className="rounded-lg border border-charcoal/20 px-3 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
                   >
-                    <option value="">Select…</option>
-                    <option value="true">Yes</option>
+                    <option value="">Selecciona…</option>
+                    <option value="true">Sí</option>
                     <option value="false">No</option>
                   </select>
                 ) : (
@@ -323,7 +323,7 @@ export default async function AdminClientDetailPage({
           type="submit"
           className="mt-2 min-h-11 rounded-full bg-charcoal px-4 text-base text-white transition-colors hover:bg-gold hover:text-charcoal"
         >
-          Save
+          Guardar
         </button>
       </form>
     </div>

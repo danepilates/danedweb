@@ -11,7 +11,7 @@ export default async function LoginPage({
   return (
     <div className="mx-auto flex min-h-[80vh] w-full max-w-sm flex-col justify-center px-4">
       <h1 className="mb-6 font-serif text-3xl font-semibold text-charcoal">
-        Log in
+        Iniciar sesión
       </h1>
 
       {error && (
@@ -22,7 +22,7 @@ export default async function LoginPage({
 
       <form action={login} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm text-charcoal">
-          Username
+          Usuario
           <input
             name="username"
             type="text"
@@ -33,7 +33,7 @@ export default async function LoginPage({
           />
         </label>
         <label className="flex flex-col gap-1 text-sm text-charcoal">
-          Password
+          Contraseña
           <input
             name="password"
             type="password"
@@ -45,14 +45,14 @@ export default async function LoginPage({
           type="submit"
           className="mt-2 rounded-full bg-charcoal px-3 py-3 text-base text-white transition-colors hover:bg-gold hover:text-charcoal"
         >
-          Log in
+          Iniciar sesión
         </button>
       </form>
 
       <p className="mt-4 text-sm text-charcoal/60">
-        No account?{" "}
+        ¿No tienes cuenta?{" "}
         <Link href="/signup" className="text-charcoal underline decoration-gold decoration-2 underline-offset-2">
-          Sign up
+          Regístrate
         </Link>
       </p>
     </div>

@@ -20,14 +20,14 @@ const displayFont = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Pilates Studio Booking",
-  description: "Book Pilates and Nutrition sessions",
+  title: "Reservas Estudio de Pilates",
+  description: "Reserva sesiones de Pilates y Nutrición",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${geistSans.variable} ${geistMono.variable} ${displayFont.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white text-charcoal">

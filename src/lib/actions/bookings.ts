@@ -20,13 +20,13 @@ export async function createBooking(formData: FormData) {
 
   if (sessionDate < todayISO()) {
     redirect(
-      `/book?${new URLSearchParams({ service: serviceSlug, date: todayISO(), error: "Can't book a past date" })}`,
+      `/book?${new URLSearchParams({ service: serviceSlug, date: todayISO(), error: "No puedes reservar una fecha pasada" })}`,
     );
   }
 
   if (isSlotInPast(sessionDate, startTime)) {
     redirect(
-      `/book?${new URLSearchParams({ service: serviceSlug, date: sessionDate, error: "This session has already started" })}`,
+      `/book?${new URLSearchParams({ service: serviceSlug, date: sessionDate, error: "Esta sesión ya comenzó" })}`,
     );
   }
 
@@ -38,7 +38,7 @@ export async function createBooking(formData: FormData) {
 
   if (blockedDate) {
     redirect(
-      `/book?${new URLSearchParams({ service: serviceSlug, date: sessionDate, error: "The studio is closed on this date" })}`,
+      `/book?${new URLSearchParams({ service: serviceSlug, date: sessionDate, error: "El estudio está cerrado en esta fecha" })}`,
     );
   }
 

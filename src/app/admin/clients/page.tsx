@@ -39,23 +39,23 @@ export default async function AdminClientsPage({
   );
 
   const filters = [
-    { value: undefined, label: "All" },
-    { value: "free", label: "Free" },
-    { value: "full", label: "Full Plan" },
+    { value: undefined, label: "Todos" },
+    { value: "free", label: "Gratis" },
+    { value: "full", label: "Plan Full" },
   ];
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-serif text-3xl font-semibold text-charcoal">Clients</h1>
+        <h1 className="font-serif text-3xl font-semibold text-charcoal">Clientes</h1>
         <Link href="/admin" className="text-sm text-charcoal/70 underline decoration-gold decoration-2 underline-offset-2 hover:text-charcoal">
-          Back to schedule
+          Volver al horario
         </Link>
       </div>
 
       {deleted && (
         <p className="mb-4 rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-          Client deleted.
+          Cliente eliminado.
         </p>
       )}
 
@@ -86,10 +86,10 @@ export default async function AdminClientsPage({
             className="flex items-center justify-between rounded-lg border border-charcoal/10 px-4 py-3 text-sm transition-colors hover:border-gold/40"
           >
             <span className="flex items-center gap-2 text-charcoal">
-              {c.full_name || "(no name yet)"}
+              {c.full_name || "(sin nombre aún)"}
               {c.planStatus === "full" && (
                 <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-medium text-charcoal">
-                  Full Plan
+                  Plan Full
                 </span>
               )}
             </span>
@@ -97,7 +97,7 @@ export default async function AdminClientsPage({
           </Link>
         ))}
         {filtered.length === 0 && (
-          <p className="text-sm text-charcoal/50">No clients in this view.</p>
+          <p className="text-sm text-charcoal/50">No hay clientes en esta vista.</p>
         )}
       </div>
     </div>

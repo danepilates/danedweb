@@ -10,13 +10,13 @@ import { WeekdayStrip } from "@/components/weekday-strip";
 import { dayOfWeekFromISO, formatTime, todayISO } from "@/lib/dates";
 
 const DAY_LABELS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
+  "Domingo",
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
 ];
 
 type Slot = {
@@ -81,20 +81,20 @@ export default async function AdminPage({
     <div className="mx-auto max-w-3xl px-4 py-6">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-serif text-3xl font-semibold text-charcoal">
-          Admin — Schedule
+          Admin — Horario
         </h1>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
           <Link href="/admin/clients" className="text-charcoal/70 underline decoration-gold decoration-2 underline-offset-2 hover:text-charcoal">
-            Clients
+            Clientes
           </Link>
           <Link href="/admin/custom-fields" className="text-charcoal/70 underline decoration-gold decoration-2 underline-offset-2 hover:text-charcoal">
-            Profile fields
+            Campos de perfil
           </Link>
           <Link href="/admin/bookings" className="text-charcoal/70 underline decoration-gold decoration-2 underline-offset-2 hover:text-charcoal">
-            View all bookings
+            Ver todas las reservas
           </Link>
           <Link href="/admin/blocked-dates" className="text-charcoal/70 underline decoration-gold decoration-2 underline-offset-2 hover:text-charcoal">
-            Blocked dates
+            Fechas bloqueadas
           </Link>
         </div>
       </div>
@@ -141,7 +141,7 @@ export default async function AdminPage({
               <div className="flex flex-wrap items-center gap-3">
                 <form action={updateScheduleSlotCapacity} className="flex items-center gap-1">
                   <input type="hidden" name="id" value={slot.id} />
-                  <label className="text-xs text-charcoal/50">Capacity</label>
+                  <label className="text-xs text-charcoal/50">Capacidad</label>
                   <input
                     type="number"
                     name="capacity"
@@ -153,7 +153,7 @@ export default async function AdminPage({
                     type="submit"
                     className="min-h-9 rounded-full border border-charcoal/20 px-3 text-sm text-charcoal hover:border-charcoal hover:bg-charcoal/5"
                   >
-                    Save
+                    Guardar
                   </button>
                 </form>
 
@@ -164,7 +164,7 @@ export default async function AdminPage({
                     type="submit"
                     className="min-h-9 rounded-full border border-charcoal/20 px-3 text-sm text-charcoal hover:border-charcoal hover:bg-charcoal/5"
                   >
-                    {slot.is_active ? "Deactivate" : "Activate"}
+                    {slot.is_active ? "Desactivar" : "Activar"}
                   </button>
                 </form>
               </div>
@@ -172,7 +172,7 @@ export default async function AdminPage({
           ))}
           {daySlots.length === 0 && (
             <p className="text-sm text-charcoal/50">
-              No hours set for {DAY_LABELS[selectedDay]} yet.
+              Aún no hay horarios para {DAY_LABELS[selectedDay]}.
             </p>
           )}
         </div>
@@ -185,7 +185,7 @@ export default async function AdminPage({
             <input type="hidden" name="serviceId" value={selectedService.id} />
             <input type="hidden" name="dayOfWeek" value={selectedDay} />
             <label className="flex flex-col text-xs text-charcoal/50">
-              Start time
+              Hora de inicio
               <input
                 type="time"
                 name="startTime"
@@ -194,7 +194,7 @@ export default async function AdminPage({
               />
             </label>
             <label className="flex flex-col text-xs text-charcoal/50">
-              Duration (min)
+              Duración (min)
               <input
                 type="number"
                 name="durationMinutes"
@@ -206,7 +206,7 @@ export default async function AdminPage({
               />
             </label>
             <label className="flex flex-col text-xs text-charcoal/50">
-              Capacity
+              Capacidad
               <input
                 type="number"
                 name="capacity"
@@ -220,7 +220,7 @@ export default async function AdminPage({
               type="submit"
               className="min-h-10 rounded-full bg-charcoal px-4 text-sm text-white transition-colors hover:bg-gold hover:text-charcoal"
             >
-              Add hour to {DAY_LABELS[selectedDay]}
+              Agregar horario a {DAY_LABELS[selectedDay]}
             </button>
           </form>
         )}

@@ -130,7 +130,7 @@ export async function updateClientProfile(formData: FormData) {
   const username = normalizeUsername(String(formData.get("username") ?? ""));
   if (!isValidUsername(username)) {
     redirect(
-      `/admin/clients/${clientId}?error=${encodeURIComponent("Username must be 3-20 characters: letters and numbers only")}`,
+      `/admin/clients/${clientId}?error=${encodeURIComponent("El usuario debe tener 3-20 caracteres: solo letras y números")}`,
     );
   }
 
@@ -144,7 +144,7 @@ export async function updateClientProfile(formData: FormData) {
 
   if (existing) {
     redirect(
-      `/admin/clients/${clientId}?error=${encodeURIComponent("That username is already taken")}`,
+      `/admin/clients/${clientId}?error=${encodeURIComponent("Ese usuario ya está en uso")}`,
     );
   }
 
@@ -173,7 +173,9 @@ export async function sendClientPasswordReset(formData: FormData) {
   const admin = createAdminClient();
   const { data, error: lookupError } = await admin.auth.admin.getUserById(clientId);
   if (lookupError || !data.user?.email) {
-    redirect(`/admin/clients/${clientId}?error=Could not find that client's email`);
+    redirect(
+      `/admin/clients/${clientId}?error=${encodeURIComponent("No se encontró el correo de ese cliente")}`,
+    );
   }
 
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
