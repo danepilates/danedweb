@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { cancelBooking } from "@/lib/actions/bookings";
-import { formatTime, todayISO } from "@/lib/dates";
+import { formatDateDayMonth, formatTime, todayISO } from "@/lib/dates";
 
 type BookingRow = {
   id: string;
@@ -53,7 +53,7 @@ export default async function MyBookingsPage() {
             >
               <div>
                 <p className="font-medium text-charcoal">
-                  {b.services?.name} — {b.session_date}
+                  {b.services?.name} — {formatDateDayMonth(b.session_date)}
                 </p>
                 <p className="text-sm text-charcoal/50">
                   {formatTime(b.start_time)}
@@ -87,7 +87,7 @@ export default async function MyBookingsPage() {
             >
               <div>
                 <p>
-                  {b.services?.name} — {b.session_date}
+                  {b.services?.name} — {formatDateDayMonth(b.session_date)}
                 </p>
                 <p className="text-sm">{formatTime(b.start_time)}</p>
               </div>

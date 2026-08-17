@@ -60,9 +60,47 @@ const MONTH_LABELS = [
   "jul", "ago", "sep", "oct", "nov", "dic",
 ];
 
+const MONTH_LABELS_FULL = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
 export function formatDateHuman(dateStr: string): string {
   const [, m, d] = dateStr.split("-").map(Number);
   return `${formatDayLabel(dateStr)}, ${d} de ${MONTH_LABELS[m - 1]}`;
+}
+
+// "28 de agosto" — day + full month name, no weekday or year.
+export function formatDateDayMonth(dateStr: string): string {
+  const [, m, d] = dateStr.split("-").map(Number);
+  return `${d} de ${MONTH_LABELS_FULL[m - 1]}`;
+}
+
+// Month helpers — "yearMonth" is always "YYYY-MM".
+export function currentMonthISO(): string {
+  return todayISO().slice(0, 7);
+}
+
+export function addMonthsISO(yearMonth: string, months: number): string {
+  const [y, m] = yearMonth.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1 + months, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+export function daysInMonth(yearMonth: string): number {
+  const [y, m] = yearMonth.split("-").map(Number);
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+export function formatMonthHuman(yearMonth: string): string {
+  const [y, m] = yearMonth.split("-").map(Number);
+  return `${MONTH_LABELS_FULL[m - 1]} ${y}`;
+}
+
+// Monday-indexed weekday (0 = Monday .. 6 = Sunday) for a "YYYY-MM-DD"
+// string, matching this app's Monday-first calendar convention.
+export function mondayIndexedWeekday(dateStr: string): number {
+  return (dayOfWeekFromISO(dateStr) + 6) % 7;
 }
 
 export function formatTime(time: string): string {
