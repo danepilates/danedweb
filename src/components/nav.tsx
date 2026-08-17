@@ -73,7 +73,7 @@ export async function Nav() {
       <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
         <Link href="/" className="group flex items-baseline gap-2">
           <span className="font-serif text-2xl font-semibold tracking-wide text-charcoal">
-            Estudio
+            DANED Studio
           </span>
           <span className="h-1.5 w-1.5 rounded-full bg-gold" />
         </Link>
