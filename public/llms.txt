@@ -1,0 +1,19 @@
+# DANED Studio
+
+> Estudio de Pilates y Asistencia Nutricional. Los clientes reservan sesiones en línea; el estudio administra el horario semanal, los cupos por sesión, y el perfil de salud de cada cliente.
+
+## Sobre el estudio
+
+DANED Studio ofrece sesiones de Pilates y de Asistencia Nutricional mediante un sistema de reservas en línea. Los clientes crean una cuenta, completan su perfil de salud (edad, estatura, peso, condiciones médicas, lesiones, alergias) y reservan sesiones disponibles según el horario semanal que administra el estudio. Cada sesión tiene un cupo máximo de participantes.
+
+## Páginas públicas
+
+- [Inicio](/): landing page e información general del estudio.
+- [Crear cuenta](/signup): registro de nuevos clientes.
+- [Iniciar sesión](/login): acceso para clientes existentes.
+
+## Notas para agentes y crawlers
+
+- La reserva de sesiones, el perfil del cliente, y el panel de administración requieren una cuenta autenticada y no son de acceso público.
+- El inicio de sesión se hace con un nombre de usuario (no con el correo electrónico).
+- No hay una API pública disponible para integraciones de terceros.
