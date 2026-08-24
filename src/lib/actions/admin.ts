@@ -111,14 +111,14 @@ function parseCoreProfileFields(formData: FormData) {
     v && String(v).trim() !== "" ? Number(v) : null;
 
   return {
-    full_name: String(formData.get("fullName") ?? "").trim(),
-    phone: String(formData.get("phone") ?? "").trim(),
+    full_name: String(formData.get("fullName") ?? "").trim().slice(0, 200),
+    phone: String(formData.get("phone") ?? "").trim().slice(0, 30),
     age: numberOrNull(formData.get("age")),
     height_cm: numberOrNull(formData.get("heightCm")),
     weight_kg: numberOrNull(formData.get("weightKg")),
-    medical_conditions: String(formData.get("medicalConditions") ?? "").trim(),
-    injuries: String(formData.get("injuries") ?? "").trim(),
-    allergies: String(formData.get("allergies") ?? "").trim(),
+    medical_conditions: String(formData.get("medicalConditions") ?? "").trim().slice(0, 2000),
+    injuries: String(formData.get("injuries") ?? "").trim().slice(0, 2000),
+    allergies: String(formData.get("allergies") ?? "").trim().slice(0, 2000),
   };
 }
 

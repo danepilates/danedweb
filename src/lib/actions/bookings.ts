@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isSlotInPast, todayISO } from "@/lib/dates";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function createBooking(formData: FormData) {
   const supabase = await createClient();
@@ -17,6 +18,13 @@ export async function createBooking(formData: FormData) {
   const sessionDate = String(formData.get("sessionDate") ?? "");
   const startTime = String(formData.get("startTime") ?? "");
   const serviceSlug = String(formData.get("serviceSlug") ?? "");
+
+  const allowed = await checkRateLimit(`create-booking:${user.id}`, 30, 60 * 60);
+  if (!allowed) {
+    redirect(
+      `/book?${new URLSearchParams({ service: serviceSlug, date: todayISO(), error: "Demasiadas reservas en poco tiempo. Espera un momento." })}`,
+    );
+  }
 
   if (sessionDate < todayISO()) {
     redirect(

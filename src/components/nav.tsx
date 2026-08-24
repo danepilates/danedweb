@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
 import { getPlanStatus, daysUntil } from "@/lib/plan";
@@ -32,7 +33,11 @@ export async function Nav() {
   const linkClass =
     "relative py-1 text-charcoal/70 transition-colors hover:text-charcoal after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-gold after:transition-all hover:after:w-full";
 
-  const links = user ? (
+  // Plain text links — styled by the mobile dropdown's blanket [&_a]
+  // overrides below. Kept separate from authButton, which has its own
+  // fully-custom solid-pill styling that must never be touched by those
+  // overrides (they match any <a> at any depth inside that wrapper).
+  const navLinks = user ? (
     <>
       <Link href="/book" className={linkClass}>
         Reservar
@@ -55,40 +60,58 @@ export async function Nav() {
       </form>
     </>
   ) : (
-    <>
-      <Link href="/login" className={linkClass}>
-        Iniciar sesión
-      </Link>
-      <Link
-        href="/signup"
-        className="rounded-full bg-charcoal px-4 py-1.5 text-white transition-colors hover:bg-gold hover:text-charcoal"
-      >
-        Registrarse
-      </Link>
-    </>
+    <Link href="/login" className={linkClass}>
+      Iniciar sesión
+    </Link>
+  );
+
+  const authButton = !user && (
+    <Link
+      href="/signup"
+      className="block w-full rounded-full bg-charcoal px-4 py-1.5 text-center text-white transition-colors hover:bg-gold hover:text-charcoal sm:w-auto"
+    >
+      Registrarse
+    </Link>
   );
 
   return (
     <header className="border-b border-charcoal/10">
       <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
-        <Link href="/" className="group flex items-baseline gap-2">
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/logoDaned.png"
+            alt="DANED Pilates"
+            width={1152}
+            height={923}
+            priority
+            className="h-12 w-auto"
+          />
           <span className="font-serif text-2xl font-semibold tracking-wide text-charcoal">
             DANED Studio
           </span>
-          <span className="h-1.5 w-1.5 rounded-full bg-gold" />
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-6 text-sm sm:flex">{links}</nav>
+        <nav className="hidden items-center gap-6 text-sm sm:flex">
+          {navLinks}
+          {authButton}
+        </nav>
 
         {/* Mobile nav */}
         <details className="relative sm:hidden [&_summary::-webkit-details-marker]:hidden">
           <summary className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-lg text-xl leading-none text-charcoal hover:bg-charcoal/5">
             ☰
           </summary>
-          <nav className="absolute right-0 top-full z-10 mt-2 flex w-44 flex-col gap-1 rounded-lg border border-charcoal/10 bg-white p-2 text-sm shadow-lg [&_a]:rounded [&_a]:px-3 [&_a]:py-2 [&_a]:text-charcoal [&_a]:no-underline [&_a]:after:hidden [&_a]:hover:bg-gold/10 [&_button]:rounded [&_button]:px-3 [&_button]:py-2 [&_button]:text-charcoal [&_button]:after:hidden [&_button]:hover:bg-gold/10">
-            {links}
-          </nav>
+          <div className="absolute right-0 top-full z-10 mt-2 w-44 rounded-lg  border-charcoal/10 bg-white p-2 shadow-lg">
+            <nav className="flex flex-col gap-2 text-sm [&_a]:block [&_a]:w-full [&_a]:rounded [&_a]:px-3 [&_a]:py-2 [&_a]:text-left [&_a]:text-charcoal [&_a]:no-underline [&_a]:after:hidden [&_a]:hover:bg-gold/10 [&_button]:block [&_button]:w-full [&_button]:rounded [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:text-charcoal [&_button]:after:hidden [&_button]:hover:bg-gold/10">
+              {navLinks}
+            </nav>
+            {authButton && (
+              <div className="mt-1 border-t border-charcoal/10 pt-1">
+                {authButton}
+              </div>
+            )}
+          </div>
         </details>
       </div>
 

@@ -5,12 +5,21 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function login(formData: FormData) {
   const username = normalizeUsername(String(formData.get("username") ?? ""));
   const password = String(formData.get("password") ?? "");
 
   const genericError = "Usuario o contraseña inválidos";
+
+  const ip = await getClientIp();
+  const allowed = await checkRateLimit(`login:${ip}`, 10, 5 * 60);
+  if (!allowed) {
+    redirect(
+      `/login?error=${encodeURIComponent("Demasiados intentos. Espera unos minutos e inténtalo de nuevo.")}`,
+    );
+  }
 
   const admin = createAdminClient();
   const { data: profile } = await admin
@@ -54,6 +63,14 @@ export async function signup(formData: FormData) {
   const phone = String(formData.get("phone") ?? "");
   const username = normalizeUsername(String(formData.get("username") ?? ""));
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+  const ip = await getClientIp();
+  const allowed = await checkRateLimit(`signup:${ip}`, 5, 60 * 60);
+  if (!allowed) {
+    redirect(
+      `/signup?error=${encodeURIComponent("Demasiados intentos. Espera un momento e inténtalo de nuevo.")}`,
+    );
+  }
 
   if (!isValidUsername(username)) {
     redirect(
@@ -113,6 +130,13 @@ export async function updatePassword(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const allowed = await checkRateLimit(`update-password:${user.id}`, 5, 15 * 60);
+  if (!allowed) {
+    redirect(
+      `/update-password?error=${encodeURIComponent("Demasiados intentos. Espera unos minutos e inténtalo de nuevo.")}`,
+    );
+  }
 
   const password = String(formData.get("password") ?? "");
   const { error } = await supabase.auth.updateUser({ password });

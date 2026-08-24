@@ -22,6 +22,9 @@ const displayFont = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "Reservas Estudio de Pilates",
   description: "Reserva sesiones de Pilates y Nutrición",
+  icons: {
+    icon: "/danedlogo.ico",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
