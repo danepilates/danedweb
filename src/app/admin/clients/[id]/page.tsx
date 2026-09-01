@@ -142,13 +142,22 @@ export default async function AdminClientDetailPage({
           </p>
         )}
 
-        <div className="mb-3 flex flex-wrap gap-2">
+        <div className="mb-3 flex flex-col gap-2">
           {(Object.keys(PLAN_CONFIG) as Exclude<PlanType, "free">[]).map((type) => (
-            <form key={type} action={assignClientPlan}>
+            <form key={type} action={assignClientPlan} className="flex flex-wrap items-center gap-2">
               <input type="hidden" name="clientId" value={client.id} />
               <input type="hidden" name="planType" value={type} />
+              <label className="flex items-center gap-1.5 text-sm text-charcoal/70">
+                Inicio
+                <input
+                  type="date"
+                  name="startDate"
+                  defaultValue={today}
+                  className="rounded-lg border border-charcoal/20 px-2 py-1.5 text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
+                />
+              </label>
               <ConfirmSubmitButton
-                confirmMessage={`¿Asignar Plan ${PLAN_CONFIG[type].label}? Esto reinicia el saldo a ${PLAN_CONFIG[type].classes} clases y el período a ${PLAN_CONFIG[type].periodDays} días desde hoy.`}
+                confirmMessage={`¿Asignar Plan ${PLAN_CONFIG[type].label}? Esto reinicia el saldo a ${PLAN_CONFIG[type].classes} clases y el período a ${PLAN_CONFIG[type].periodDays} días desde la fecha de inicio seleccionada.`}
                 className="min-h-10 rounded-full border border-charcoal/20 px-3 text-sm text-charcoal hover:border-gold hover:bg-gold/10"
               >
                 Asignar {PLAN_CONFIG[type].label}

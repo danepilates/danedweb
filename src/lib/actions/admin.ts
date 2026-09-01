@@ -240,9 +240,11 @@ function revalidateClientPlan(clientId: string) {
   revalidatePath("/profile");
 }
 
-// Assigning a plan always starts a fresh full period from today, with a
-// full class balance — plans don't accumulate or extend, per the studio's
-// rule that unused classes are lost at period end anyway.
+// Assigning a plan always starts a fresh full period with a full class
+// balance — plans don't accumulate or extend, per the studio's rule that
+// unused classes are lost at period end anyway. The start date defaults
+// to today but admins can back/forward-date it for clients whose plan
+// should begin on a different day.
 export async function assignClientPlan(formData: FormData) {
   const supabase = await requireAdmin();
   const clientId = String(formData.get("clientId") ?? "");
@@ -250,14 +252,15 @@ export async function assignClientPlan(formData: FormData) {
   if (!clientId || !(planType in PLAN_CONFIG)) return;
 
   const config = PLAN_CONFIG[planType as Exclude<PlanType, "free">];
-  const today = todayISO();
+  const requestedStart = String(formData.get("startDate") ?? "");
+  const startDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedStart) ? requestedStart : todayISO();
 
   await supabase
     .from("profiles")
     .update({
       plan_type: planType,
-      plan_start_date: today,
-      plan_end_date: addDaysISO(today, config.periodDays),
+      plan_start_date: startDate,
+      plan_end_date: addDaysISO(startDate, config.periodDays),
       plan_classes_total: config.classes,
       plan_classes_remaining: config.classes,
     })
