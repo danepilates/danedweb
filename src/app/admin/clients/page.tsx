@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getPlanStatus } from "@/lib/plan";
+import { getEffectivePlanType, planLabel, type PlanType } from "@/lib/plan";
 import { todayISO } from "@/lib/dates";
 
 export default async function AdminClientsPage({
@@ -26,22 +26,30 @@ export default async function AdminClientsPage({
 
   const { data: clients } = await supabase
     .from("profiles")
-    .select("id, username, full_name, phone, age, is_admin, plan_end_date")
+    .select("id, username, full_name, phone, age, is_admin, plan_type, plan_end_date")
     .order("full_name");
 
   const today = todayISO();
   const nonAdminClients = (clients ?? [])
     .filter((c) => !c.is_admin)
-    .map((c) => ({ ...c, planStatus: getPlanStatus(c.plan_end_date, today) }));
+    .map((c) => ({
+      ...c,
+      effectivePlan: getEffectivePlanType(c.plan_type, c.plan_end_date, today),
+    }));
 
+  const validFilters: PlanType[] = ["free", "silver", "gold", "vip"];
   const filtered = nonAdminClients.filter((c) =>
-    planFilter === "free" || planFilter === "full" ? c.planStatus === planFilter : true,
+    planFilter && validFilters.includes(planFilter as PlanType)
+      ? c.effectivePlan === planFilter
+      : true,
   );
 
-  const filters = [
+  const filters: { value?: PlanType; label: string }[] = [
     { value: undefined, label: "Todos" },
     { value: "free", label: "Gratis" },
-    { value: "full", label: "Plan Full" },
+    { value: "silver", label: "Silver" },
+    { value: "gold", label: "Gold" },
+    { value: "vip", label: "VIP" },
   ];
 
   return (
@@ -59,7 +67,7 @@ export default async function AdminClientsPage({
         </p>
       )}
 
-      <div className="mb-4 flex gap-2 border-b border-charcoal/10">
+      <div className="mb-4 flex flex-wrap gap-2 border-b border-charcoal/10">
         {filters.map((f) => {
           const isSelected = (planFilter ?? undefined) === f.value;
           return (
@@ -87,9 +95,9 @@ export default async function AdminClientsPage({
           >
             <span className="flex items-center gap-2 text-charcoal">
               {c.full_name || "(sin nombre aún)"}
-              {c.planStatus === "full" && (
+              {c.effectivePlan !== "free" && (
                 <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-medium text-charcoal">
-                  Plan Full
+                  {planLabel(c.effectivePlan)}
                 </span>
               )}
             </span>

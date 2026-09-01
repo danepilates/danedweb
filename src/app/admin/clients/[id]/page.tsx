@@ -5,14 +5,13 @@ import {
   updateClientProfile,
   sendClientPasswordReset,
   deleteClient,
-  setClientPlan,
-  renewClientPlan,
+  assignClientPlan,
   revertClientToFree,
 } from "@/lib/actions/admin";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import type { CustomField, CustomValue, Profile } from "@/lib/profile";
 import { USERNAME_PATTERN } from "@/lib/username";
-import { getPlanStatus } from "@/lib/plan";
+import { getEffectivePlanType, planLabel, PLAN_CONFIG, type PlanType } from "@/lib/plan";
 import { formatDateHuman, todayISO } from "@/lib/dates";
 
 export default async function AdminClientDetailPage({
@@ -46,7 +45,8 @@ export default async function AdminClientDetailPage({
 
   if (!client) redirect("/admin/clients");
 
-  const planStatus = getPlanStatus(client.plan_end_date, todayISO());
+  const today = todayISO();
+  const effectivePlan = getEffectivePlanType(client.plan_type, client.plan_end_date, today);
 
   const { data: customFields } = await supabase
     .from("custom_fields")
@@ -114,43 +114,48 @@ export default async function AdminClientDetailPage({
 
       <section
         className={`mb-8 rounded-lg border p-4 ${
-          planStatus === "full" ? "border-gold/40 bg-gold/5" : "border-charcoal/10"
+          effectivePlan !== "free" ? "border-gold/40 bg-gold/5" : "border-charcoal/10"
         }`}
       >
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-serif text-lg font-semibold text-charcoal">Plan</h2>
           <span
             className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-              planStatus === "full"
+              effectivePlan !== "free"
                 ? "bg-gold text-charcoal"
                 : "bg-charcoal/10 text-charcoal/60"
             }`}
           >
-            {planStatus === "full" ? "Plan Full" : "Gratis"}
+            {planLabel(effectivePlan)}
           </span>
         </div>
 
-        {client.plan_end_date && (
+        {effectivePlan !== "free" && (
           <p className="mb-3 text-sm text-charcoal/50">
-            {planStatus === "full" ? "Activo hasta" : "Expiró el"}{" "}
-            {formatDateHuman(client.plan_end_date)}
+            {client.plan_classes_remaining} de {client.plan_classes_total} clases restantes ·
+            vence el {formatDateHuman(client.plan_end_date!)}
+          </p>
+        )}
+        {effectivePlan === "free" && client.plan_end_date && (
+          <p className="mb-3 text-sm text-charcoal/50">
+            Su último plan expiró el {formatDateHuman(client.plan_end_date)}
           </p>
         )}
 
         <div className="mb-3 flex flex-wrap gap-2">
-          {[30, 90, 365].map((days) => (
-            <form key={days} action={renewClientPlan}>
+          {(Object.keys(PLAN_CONFIG) as Exclude<PlanType, "free">[]).map((type) => (
+            <form key={type} action={assignClientPlan}>
               <input type="hidden" name="clientId" value={client.id} />
-              <input type="hidden" name="days" value={days} />
-              <button
-                type="submit"
+              <input type="hidden" name="planType" value={type} />
+              <ConfirmSubmitButton
+                confirmMessage={`¿Asignar Plan ${PLAN_CONFIG[type].label}? Esto reinicia el saldo a ${PLAN_CONFIG[type].classes} clases y el período a ${PLAN_CONFIG[type].periodDays} días desde hoy.`}
                 className="min-h-10 rounded-full border border-charcoal/20 px-3 text-sm text-charcoal hover:border-gold hover:bg-gold/10"
               >
-                Renovar +{days}d
-              </button>
+                Asignar {PLAN_CONFIG[type].label}
+              </ConfirmSubmitButton>
             </form>
           ))}
-          {client.plan_end_date && (
+          {effectivePlan !== "free" && (
             <form action={revertClientToFree}>
               <input type="hidden" name="clientId" value={client.id} />
               <button
@@ -162,34 +167,6 @@ export default async function AdminClientDetailPage({
             </form>
           )}
         </div>
-
-        <form action={setClientPlan} className="flex flex-wrap items-end gap-2">
-          <input type="hidden" name="clientId" value={client.id} />
-          <label className="flex flex-col text-xs text-charcoal/50">
-            Fecha de inicio
-            <input
-              type="date"
-              name="planStartDate"
-              defaultValue={client.plan_start_date ?? todayISO()}
-              className="rounded-lg border border-charcoal/20 px-2 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
-            />
-          </label>
-          <label className="flex flex-col text-xs text-charcoal/50">
-            Fecha de fin
-            <input
-              type="date"
-              name="planEndDate"
-              defaultValue={client.plan_end_date ?? ""}
-              className="rounded-lg border border-charcoal/20 px-2 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
-            />
-          </label>
-          <button
-            type="submit"
-            className="min-h-10 rounded-full bg-charcoal px-4 text-sm text-white transition-colors hover:bg-gold hover:text-charcoal"
-          >
-            Establecer fechas personalizadas
-          </button>
-        </form>
       </section>
 
       <form action={updateClientProfile} className="flex flex-col gap-5">

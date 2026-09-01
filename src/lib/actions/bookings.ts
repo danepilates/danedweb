@@ -22,19 +22,19 @@ export async function createBooking(formData: FormData) {
   const allowed = await checkRateLimit(`create-booking:${user.id}`, 30, 60 * 60);
   if (!allowed) {
     redirect(
-      `/book?${new URLSearchParams({ service: serviceSlug, date: todayISO(), error: "Demasiadas reservas en poco tiempo. Espera un momento." })}`,
+      `/book?${new URLSearchParams({ service: serviceSlug, month: todayISO().slice(0, 7), date: todayISO(), error: "Demasiadas reservas en poco tiempo. Espera un momento." })}`,
     );
   }
 
   if (sessionDate < todayISO()) {
     redirect(
-      `/book?${new URLSearchParams({ service: serviceSlug, date: todayISO(), error: "No puedes reservar una fecha pasada" })}`,
+      `/book?${new URLSearchParams({ service: serviceSlug, month: todayISO().slice(0, 7), date: todayISO(), error: "No puedes reservar una fecha pasada" })}`,
     );
   }
 
   if (isSlotInPast(sessionDate, startTime)) {
     redirect(
-      `/book?${new URLSearchParams({ service: serviceSlug, date: sessionDate, error: "Esta sesión ya comenzó" })}`,
+      `/book?${new URLSearchParams({ service: serviceSlug, month: sessionDate.slice(0, 7), date: sessionDate, error: "Esta sesión ya comenzó" })}`,
     );
   }
 
@@ -46,7 +46,7 @@ export async function createBooking(formData: FormData) {
 
   if (blockedDate) {
     redirect(
-      `/book?${new URLSearchParams({ service: serviceSlug, date: sessionDate, error: "El estudio está cerrado en esta fecha" })}`,
+      `/book?${new URLSearchParams({ service: serviceSlug, month: sessionDate.slice(0, 7), date: sessionDate, error: "El estudio está cerrado en esta fecha" })}`,
     );
   }
 
@@ -62,7 +62,11 @@ export async function createBooking(formData: FormData) {
     .select("id")
     .single();
 
-  const params = new URLSearchParams({ service: serviceSlug, date: sessionDate });
+  const params = new URLSearchParams({
+    service: serviceSlug,
+    month: sessionDate.slice(0, 7),
+    date: sessionDate,
+  });
   if (error) {
     params.set("error", error.message);
   } else if (inserted) {
@@ -97,6 +101,10 @@ export async function cancelBooking(formData: FormData) {
   if (redirectTo === "/my-bookings") {
     redirect("/my-bookings");
   }
-  const params = new URLSearchParams({ service: serviceSlug, date: sessionDate });
+  const params = new URLSearchParams({
+    service: serviceSlug,
+    month: sessionDate.slice(0, 7),
+    date: sessionDate,
+  });
   redirect(`/book?${params.toString()}`);
 }

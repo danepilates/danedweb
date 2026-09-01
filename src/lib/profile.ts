@@ -11,8 +11,11 @@ export type Profile = {
   injuries: string | null;
   allergies: string | null;
   is_admin: boolean;
+  plan_type: string;
   plan_start_date: string | null;
   plan_end_date: string | null;
+  plan_classes_total: number | null;
+  plan_classes_remaining: number | null;
 };
 
 export type CustomField = {

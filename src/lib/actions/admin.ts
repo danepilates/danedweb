@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { addDaysISO, todayISO } from "@/lib/dates";
+import { translateAuthError } from "@/lib/supabase-error";
+import { PLAN_CONFIG, type PlanType } from "@/lib/plan";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -185,7 +187,7 @@ export async function sendClientPasswordReset(formData: FormData) {
 
   redirect(
     error
-      ? `/admin/clients/${clientId}?error=${encodeURIComponent(error.message)}`
+      ? `/admin/clients/${clientId}?error=${encodeURIComponent(translateAuthError(error.message))}`
       : `/admin/clients/${clientId}?reset=1`,
   );
 }
@@ -238,42 +240,28 @@ function revalidateClientPlan(clientId: string) {
   revalidatePath("/profile");
 }
 
-export async function setClientPlan(formData: FormData) {
+// Assigning a plan always starts a fresh full period from today, with a
+// full class balance — plans don't accumulate or extend, per the studio's
+// rule that unused classes are lost at period end anyway.
+export async function assignClientPlan(formData: FormData) {
   const supabase = await requireAdmin();
   const clientId = String(formData.get("clientId") ?? "");
-  const startDate = String(formData.get("planStartDate") ?? "");
-  const endDate = String(formData.get("planEndDate") ?? "");
-  if (!clientId || !startDate || !endDate) return;
+  const planType = String(formData.get("planType") ?? "") as PlanType;
+  if (!clientId || !(planType in PLAN_CONFIG)) return;
+
+  const config = PLAN_CONFIG[planType as Exclude<PlanType, "free">];
+  const today = todayISO();
 
   await supabase
     .from("profiles")
-    .update({ plan_start_date: startDate, plan_end_date: endDate })
+    .update({
+      plan_type: planType,
+      plan_start_date: today,
+      plan_end_date: addDaysISO(today, config.periodDays),
+      plan_classes_total: config.classes,
+      plan_classes_remaining: config.classes,
+    })
     .eq("id", clientId);
-
-  revalidateClientPlan(clientId);
-  redirect(`/admin/clients/${clientId}?saved=1`);
-}
-
-export async function renewClientPlan(formData: FormData) {
-  const supabase = await requireAdmin();
-  const clientId = String(formData.get("clientId") ?? "");
-  const days = Number(formData.get("days") ?? 30);
-  if (!clientId) return;
-
-  const { data: client } = await supabase
-    .from("profiles")
-    .select("plan_end_date")
-    .eq("id", clientId)
-    .single();
-
-  const today = todayISO();
-  const stillActive = client?.plan_end_date && client.plan_end_date >= today;
-  const base = stillActive ? client!.plan_end_date! : today;
-
-  const updates: Record<string, unknown> = { plan_end_date: addDaysISO(base, days) };
-  if (!stillActive) updates.plan_start_date = today;
-
-  await supabase.from("profiles").update(updates).eq("id", clientId);
 
   revalidateClientPlan(clientId);
   redirect(`/admin/clients/${clientId}?saved=1`);
@@ -286,7 +274,13 @@ export async function revertClientToFree(formData: FormData) {
 
   await supabase
     .from("profiles")
-    .update({ plan_start_date: null, plan_end_date: null })
+    .update({
+      plan_type: "free",
+      plan_start_date: null,
+      plan_end_date: null,
+      plan_classes_total: null,
+      plan_classes_remaining: null,
+    })
     .eq("id", clientId);
 
   revalidateClientPlan(clientId);

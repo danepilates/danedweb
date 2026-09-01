@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { translateAuthError } from "@/lib/supabase-error";
 
 export async function login(formData: FormData) {
   const username = normalizeUsername(String(formData.get("username") ?? ""));
@@ -98,7 +99,7 @@ export async function signup(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/signup?error=${encodeURIComponent(error.message)}`);
+    redirect(`/signup?error=${encodeURIComponent(translateAuthError(error.message))}`);
   }
 
   // The DB trigger creates the profile row with full_name; add the phone
@@ -142,7 +143,7 @@ export async function updatePassword(formData: FormData) {
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    redirect(`/update-password?error=${encodeURIComponent(error.message)}`);
+    redirect(`/update-password?error=${encodeURIComponent(translateAuthError(error.message))}`);
   }
 
   redirect("/book");

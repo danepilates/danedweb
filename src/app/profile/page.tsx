@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { updateOwnProfile } from "@/lib/actions/profile";
 import type { CustomField, CustomValue, Profile } from "@/lib/profile";
 import { USERNAME_PATTERN } from "@/lib/username";
-import { getPlanStatus } from "@/lib/plan";
+import { getEffectivePlanType, planLabel } from "@/lib/plan";
 import { formatDateHuman, todayISO } from "@/lib/dates";
 
 export default async function ProfilePage({
@@ -25,7 +25,8 @@ export default async function ProfilePage({
     .eq("id", user.id)
     .single<Profile>();
 
-  const planStatus = getPlanStatus(profile?.plan_end_date ?? null, todayISO());
+  const today = todayISO();
+  const effectivePlan = getEffectivePlanType(profile?.plan_type, profile?.plan_end_date ?? null, today);
 
   const { data: customFields } = await supabase
     .from("custom_fields")
@@ -71,19 +72,20 @@ export default async function ProfilePage({
 
       <section
         className={`mb-6 flex items-center justify-between rounded-lg border p-4 ${
-          planStatus === "full" ? "border-gold/40 bg-gold/10" : "border-charcoal/10"
+          effectivePlan !== "free" ? "border-gold/40 bg-gold/10" : "border-charcoal/10"
         }`}
       >
         <div>
           <p className="text-sm text-charcoal/50">Membresía</p>
           <p className="font-serif text-lg font-semibold text-charcoal">
-            {planStatus === "full" ? "Plan Full" : "Gratis"}
+            {planLabel(effectivePlan)}
           </p>
         </div>
-        {profile?.plan_end_date && (
-          <p className="text-sm text-charcoal/50">
-            {planStatus === "full" ? "Activo hasta" : "Expiró el"}{" "}
-            {formatDateHuman(profile.plan_end_date)}
+        {effectivePlan !== "free" && (
+          <p className="text-right text-sm text-charcoal/50">
+            {profile!.plan_classes_remaining} de {profile!.plan_classes_total} clases
+            <br />
+            vence el {formatDateHuman(profile!.plan_end_date!)}
           </p>
         )}
       </section>

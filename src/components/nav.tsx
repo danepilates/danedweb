@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
-import { getPlanStatus, daysUntil } from "@/lib/plan";
+import { getEffectivePlanType, planLabel, daysUntil } from "@/lib/plan";
 import { todayISO } from "@/lib/dates";
 
 export async function Nav() {
@@ -13,19 +13,24 @@ export async function Nav() {
 
   let isAdmin = false;
   let planWarningDays: number | null = null;
+  let planWarningLabel = "";
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("is_admin, plan_end_date")
+      .select("is_admin, plan_type, plan_end_date")
       .eq("id", user.id)
       .single();
     isAdmin = profile?.is_admin ?? false;
 
     if (profile?.plan_end_date) {
       const today = todayISO();
-      if (getPlanStatus(profile.plan_end_date, today) === "full") {
+      const effectivePlan = getEffectivePlanType(profile.plan_type, profile.plan_end_date, today);
+      if (effectivePlan !== "free") {
         const days = daysUntil(profile.plan_end_date, today);
-        if (days <= 5) planWarningDays = days;
+        if (days <= 5) {
+          planWarningDays = days;
+          planWarningLabel = planLabel(effectivePlan);
+        }
       }
     }
   }
@@ -117,7 +122,7 @@ export async function Nav() {
 
       {planWarningDays !== null && (
         <div className="border-t border-gold/30 bg-gold/10 px-4 py-2 text-center text-sm text-charcoal">
-          Tu Plan Full{" "}
+          Tu Plan {planWarningLabel}{" "}
           {planWarningDays === 0
             ? "termina hoy"
             : `termina en ${planWarningDays} día${planWarningDays === 1 ? "" : "s"}`}
