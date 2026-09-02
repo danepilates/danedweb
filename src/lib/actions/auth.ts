@@ -9,10 +9,10 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { translateAuthError } from "@/lib/supabase-error";
 
 export async function login(formData: FormData) {
-  const username = normalizeUsername(String(formData.get("username") ?? ""));
+  const identifier = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
-  const genericError = "Usuario o contraseña inválidos";
+  const genericError = "Usuario/correo o contraseña inválidos";
 
   const ip = await getClientIp();
   const allowed = await checkRateLimit(`login:${ip}`, 10, 5 * 60);
@@ -22,29 +22,34 @@ export async function login(formData: FormData) {
     );
   }
 
-  const admin = createAdminClient();
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("id")
-    .ilike("username", username)
-    .maybeSingle();
+  let email: string;
 
-  if (!profile) {
-    redirect(`/login?error=${encodeURIComponent(genericError)}`);
-  }
+  if (identifier.includes("@")) {
+    email = identifier.toLowerCase();
+  } else {
+    const admin = createAdminClient();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id")
+      .ilike("username", normalizeUsername(identifier))
+      .maybeSingle();
 
-  const { data: userData, error: lookupError } =
-    await admin.auth.admin.getUserById(profile.id);
+    if (!profile) {
+      redirect(`/login?error=${encodeURIComponent(genericError)}`);
+    }
 
-  if (lookupError || !userData.user?.email) {
-    redirect(`/login?error=${encodeURIComponent(genericError)}`);
+    const { data: userData, error: lookupError } =
+      await admin.auth.admin.getUserById(profile.id);
+
+    if (lookupError || !userData.user?.email) {
+      redirect(`/login?error=${encodeURIComponent(genericError)}`);
+    }
+
+    email = userData.user.email;
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email: userData.user.email,
-    password,
-  });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     redirect(`/login?error=${encodeURIComponent(genericError)}`);

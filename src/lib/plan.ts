@@ -1,10 +1,13 @@
 export type PlanType = "free" | "silver" | "gold" | "vip";
 
-export const PLAN_CONFIG: Record<Exclude<PlanType, "free">, {
-  label: string;
-  classes: number;
-  periodDays: number;
-}> = {
+export const PLAN_CONFIG: Record<
+  Exclude<PlanType, "free">,
+  {
+    label: string;
+    classes: number;
+    periodDays: number;
+  }
+> = {
   silver: { label: "Silver", classes: 12, periodDays: 30 },
   gold: { label: "Gold", classes: 20, periodDays: 30 },
   vip: { label: "VIP", classes: 60, periodDays: 90 },
@@ -24,7 +27,7 @@ export function getEffectivePlanType(
 }
 
 export function planLabel(type: PlanType): string {
-  return type === "free" ? "Gratis" : PLAN_CONFIG[type].label;
+  return type === "free" ? "Diario" : PLAN_CONFIG[type].label;
 }
 
 export function daysUntil(dateStr: string, today: string): number {

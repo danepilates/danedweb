@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signup } from "@/lib/actions/auth";
 import { USERNAME_PATTERN } from "@/lib/username";
+import { PasswordInput } from "@/components/password-input";
 
 export default async function SignupPage({
   searchParams,
@@ -67,13 +68,7 @@ export default async function SignupPage({
         </label>
         <label className="flex flex-col gap-1 text-sm text-charcoal">
           Contraseña
-          <input
-            name="password"
-            type="password"
-            required
-            minLength={6}
-            className="rounded-lg border border-charcoal/20 px-3 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
-          />
+          <PasswordInput name="password" required minLength={6} />
         </label>
         <button
           type="submit"

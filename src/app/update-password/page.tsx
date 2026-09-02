@@ -1,4 +1,5 @@
 import { updatePassword } from "@/lib/actions/auth";
+import { PasswordInput } from "@/components/password-input";
 
 export default async function UpdatePasswordPage({
   searchParams,
@@ -22,13 +23,7 @@ export default async function UpdatePasswordPage({
       <form action={updatePassword} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm text-charcoal">
           Nueva contraseña
-          <input
-            name="password"
-            type="password"
-            required
-            minLength={6}
-            className="rounded-lg border border-charcoal/20 px-3 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
-          />
+          <PasswordInput name="password" required minLength={6} />
         </label>
         <button
           type="submit"

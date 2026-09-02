@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { login } from "@/lib/actions/auth";
+import { PasswordInput } from "@/components/password-input";
 
 export default async function LoginPage({
   searchParams,
@@ -22,7 +23,7 @@ export default async function LoginPage({
 
       <form action={login} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm text-charcoal">
-          Usuario
+          Ingresa con tu correo o usuario
           <input
             name="username"
             type="text"
@@ -34,12 +35,7 @@ export default async function LoginPage({
         </label>
         <label className="flex flex-col gap-1 text-sm text-charcoal">
           Contraseña
-          <input
-            name="password"
-            type="password"
-            required
-            className="rounded-lg border border-charcoal/20 px-3 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
-          />
+          <PasswordInput name="password" required />
         </label>
         <button
           type="submit"
