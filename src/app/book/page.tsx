@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createBooking, cancelBooking } from "@/lib/actions/bookings";
 import { BookingCalendar } from "@/components/booking-calendar";
 import {
@@ -128,9 +129,14 @@ export default async function BookPage({
 
   const slotIds = slots.map((s) => s.id);
 
+  // RLS on bookings only lets a user see their own rows, so counting
+  // spots taken needs the service-role client to see everyone's
+  // bookings for this slot/day — only aggregate counts and each row's
+  // own user_id (checked against the current user, never displayed for
+  // anyone else) are used below, no other user's data is exposed.
   const { data: bookingsForDay } =
     slotIds.length > 0 && selectedDate
-      ? await supabase
+      ? await createAdminClient()
           .from("bookings")
           .select("id, schedule_slot_id, user_id, status")
           .in("schedule_slot_id", slotIds)

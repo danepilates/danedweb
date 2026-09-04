@@ -39,6 +39,22 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Next dev blocks cross-origin requests to its JS/HMR assets by
+  // default — without this, testing from a phone/other device over the
+  // LAN IP loads the page but never hydrates React, so any client
+  // component (buttons, toggles, onChange handlers) silently does
+  // nothing. Only applies in development; irrelevant in production.
+  allowedDevOrigins: ["192.168.1.23"],
+  // Server Actions default to a 1MB request body limit — well under our
+  // own 5MB avatar-size check in uploadAvatarIfPresent, so any photo
+  // between ~1MB and 5MB was rejected by the framework before that check
+  // ever ran, crashing the action with no friendly error message. Raised
+  // past our 5MB app-level limit plus multipart overhead.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
   async headers() {
     return [
       {

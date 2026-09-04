@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateOwnProfile } from "@/lib/actions/profile";
+import { AvatarUploadField } from "@/components/avatar-upload-field";
 import type { CustomField, CustomValue, Profile } from "@/lib/profile";
 import { USERNAME_PATTERN } from "@/lib/username";
 import { getEffectivePlanType, planLabel } from "@/lib/plan";
@@ -104,10 +105,7 @@ export default async function ProfilePage({
               Sin foto
             </div>
           )}
-          <label className="text-sm">
-            <span className="mb-1 block text-charcoal/50">Foto de perfil</span>
-            <input type="file" name="avatar" accept="image/*" className="text-sm" />
-          </label>
+          <AvatarUploadField />
         </div>
 
         <label className="flex flex-col gap-1 text-sm">

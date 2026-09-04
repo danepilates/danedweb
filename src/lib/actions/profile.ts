@@ -35,10 +35,14 @@ async function uploadAvatarIfPresent(
 
   const path = `${userId}/avatar.${ext}`;
 
-  const { error } = await supabase.storage
-    .from("avatars")
-    .upload(path, file, { upsert: true, contentType: file.type });
-  if (error) return { error: "No se pudo subir la foto" };
+  try {
+    const { error } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (error) return { error: "No se pudo subir la foto" };
+  } catch {
+    return { error: "No se pudo subir la foto" };
+  }
 
   const {
     data: { publicUrl },
