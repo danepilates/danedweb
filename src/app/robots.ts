@@ -4,7 +4,7 @@ import type { MetadataRoute } from "next";
 // for a crawler to index and no SEO value, so they're disallowed. AI
 // crawlers are explicitly welcomed onto the public pages — this is a
 // business that wants to be found, not content to protect from training.
-const publicPaths = ["/", "/login", "/signup"];
+const publicPaths = ["/", "/login", "/signup", "/forgot-password"];
 const privatePaths = [
   "/book",
   "/my-bookings",

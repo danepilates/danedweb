@@ -59,6 +59,32 @@ export async function login(formData: FormData) {
   redirect("/book");
 }
 
+export async function requestPasswordReset(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+  const ip = await getClientIp();
+  const allowed = await checkRateLimit(`forgot-password:${ip}`, 5, 15 * 60);
+  if (!allowed) {
+    redirect(
+      `/forgot-password?error=${encodeURIComponent("Demasiados intentos. Espera unos minutos e inténtalo de nuevo.")}`,
+    );
+  }
+
+  if (!email) {
+    redirect(`/forgot-password?error=${encodeURIComponent("Ingresa tu correo electrónico")}`);
+  }
+
+  const supabase = await createClient();
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/confirm?next=/update-password`,
+  });
+
+  // Same destination regardless of whether the address is registered —
+  // revealing that would let anyone enumerate real accounts.
+  redirect("/forgot-password/check-email");
+}
+
 export async function signup(formData: FormData) {
   const supabase = await createClient();
   const admin = createAdminClient();
@@ -151,7 +177,11 @@ export async function updatePassword(formData: FormData) {
     redirect(`/update-password?error=${encodeURIComponent(translateAuthError(error.message))}`);
   }
 
-  redirect("/book");
+  // Sign out the recovery session and send them to a fresh login rather
+  // than leaving them authenticated on whatever device opened the email
+  // link — they confirm the new password works by using it right away.
+  await supabase.auth.signOut();
+  redirect("/login?reset=1");
 }
 
 export async function signOut() {

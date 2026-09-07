@@ -5,9 +5,9 @@ import { PasswordInput } from "@/components/password-input";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; reset?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, reset } = await searchParams;
 
   return (
     <div className="mx-auto flex min-h-[80vh] w-full max-w-sm flex-col justify-center px-4">
@@ -15,6 +15,11 @@ export default async function LoginPage({
         Iniciar sesión
       </h1>
 
+      {reset && (
+        <p className="mb-4 rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+          Contraseña actualizada. Inicia sesión con tu nueva contraseña.
+        </p>
+      )}
       {error && (
         <p className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
@@ -37,6 +42,12 @@ export default async function LoginPage({
           Contraseña
           <PasswordInput name="password" required />
         </label>
+        <Link
+          href="/forgot-password"
+          className="self-end text-sm text-charcoal/60 underline decoration-gold decoration-2 underline-offset-2 hover:text-charcoal"
+        >
+          ¿Olvidaste tu contraseña?
+        </Link>
         <button
           type="submit"
           className="mt-2 rounded-full bg-charcoal px-3 py-3 text-base text-white transition-colors hover:bg-gold hover:text-charcoal"
