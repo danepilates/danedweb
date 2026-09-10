@@ -30,6 +30,7 @@ type BookingRow = {
   id: string;
   session_date: string;
   start_time: string;
+  schedule_slot_id: string;
   services: { name: string } | null;
   profiles: {
     full_name: string | null;
@@ -37,6 +38,7 @@ type BookingRow = {
     plan_type: string | null;
     plan_end_date: string | null;
   } | null;
+  schedule_slots: { capacity: number } | null;
   effectivePlan: PlanType;
 };
 
@@ -75,38 +77,54 @@ function HourScheduleSection({
         <p className="text-sm text-charcoal/40">Sin reservas.</p>
       ) : (
         <div className="flex flex-col gap-2">
-          {groups.map(({ hour, bookings }) => (
-            <div
-              key={hour}
-              className="rounded-lg px-4 py-3"
-              style={{ backgroundColor: cardColor }}
-            >
-              <p className="mb-1 font-medium text-charcoal">
-                {formatTime(`${String(hour).padStart(2, "0")}:00`)}
-              </p>
-              <div className="flex flex-col gap-1 text-sm text-charcoal/70">
-                {bookings.map((b) => {
-                  const badge = PLAN_BADGES[b.effectivePlan];
-                  return (
-                    <span key={b.id} className="flex items-center gap-1.5">
-                      {b.profiles?.full_name ?? "Desconocido"}
-                      {badge && (
-                        <span className="inline-flex items-center gap-1">
-                          <span style={{ color: badge.color }}>★</span>
-                          <span
-                            className="rounded-full px-2 py-0.5 text-xs font-medium"
-                            style={{ backgroundColor: badge.color, color: badge.textColor }}
-                          >
-                            {badge.label}
+          {groups.map(({ hour, bookings }) => {
+            const capacityBySlot = new Map<string, number>();
+            for (const b of bookings) {
+              capacityBySlot.set(b.schedule_slot_id, b.schedule_slots?.capacity ?? 0);
+            }
+            const totalCapacity = Array.from(capacityBySlot.values()).reduce((a, c) => a + c, 0);
+            const bookedCount = bookings.length;
+            const isFull = totalCapacity > 0 && bookedCount >= totalCapacity;
+
+            return (
+              <div
+                key={hour}
+                className="rounded-lg px-4 py-3"
+                style={{ backgroundColor: cardColor }}
+              >
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <p className="font-medium text-charcoal">
+                    {formatTime(`${String(hour).padStart(2, "0")}:00`)}
+                  </p>
+                  <span className="text-xs font-medium text-charcoal/60">
+                    {isFull ? "Lleno" : `${bookedCount}/${totalCapacity}`}
+                  </span>
+                </div>
+                <ol className="flex flex-col gap-1 text-sm text-charcoal/70">
+                  {bookings.map((b, i) => {
+                    const badge = PLAN_BADGES[b.effectivePlan];
+                    return (
+                      <li key={b.id} className="flex items-center gap-1.5">
+                        <span className="text-charcoal/40">{i + 1}.</span>
+                        {b.profiles?.full_name ?? "Desconocido"}
+                        {badge && (
+                          <span className="inline-flex items-center gap-1">
+                            <span style={{ color: badge.color }}>★</span>
+                            <span
+                              className="rounded-full px-2 py-0.5 text-xs font-medium"
+                              style={{ backgroundColor: badge.color, color: badge.textColor }}
+                            >
+                              {badge.label}
+                            </span>
                           </span>
-                        </span>
-                      )}
-                    </span>
-                  );
-                })}
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -142,7 +160,7 @@ export default async function AdminPage({
   const { data } = await supabase
     .from("bookings")
     .select(
-      "id, session_date, start_time, services(name), profiles(full_name, phone, plan_type, plan_end_date)",
+      "id, session_date, start_time, schedule_slot_id, services(name), profiles(full_name, phone, plan_type, plan_end_date), schedule_slots(capacity)",
     )
     .eq("status", "booked")
     .gte("session_date", monthStart)
