@@ -58,7 +58,7 @@ export default async function AdminClientsPage({
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-serif text-3xl font-semibold text-charcoal">Clientes</h1>
         <Link href="/admin" className="text-sm text-charcoal/70 underline decoration-gold decoration-2 underline-offset-2 hover:text-charcoal">
-          Volver al horario
+          Volver a reservas
         </Link>
       </div>
 

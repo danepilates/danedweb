@@ -44,7 +44,7 @@ export async function addScheduleSlot(formData: FormData) {
     capacity,
   });
 
-  revalidatePath("/admin");
+  revalidatePath("/admin/schedule");
   revalidatePath("/book");
 }
 
@@ -59,7 +59,7 @@ export async function toggleScheduleSlot(formData: FormData) {
     .update({ is_active: !isActive })
     .eq("id", id);
 
-  revalidatePath("/admin");
+  revalidatePath("/admin/schedule");
   revalidatePath("/book");
 }
 
@@ -73,7 +73,7 @@ export async function updateScheduleSlotCapacity(formData: FormData) {
     await supabase.from("schedule_slots").update({ capacity }).eq("id", id);
   }
 
-  revalidatePath("/admin");
+  revalidatePath("/admin/schedule");
   revalidatePath("/book");
 }
 

@@ -37,7 +37,7 @@ export default async function AdminBlockedDatesPage({
           Fechas bloqueadas
         </h1>
         <Link href="/admin" className="text-sm text-charcoal/70 underline decoration-gold decoration-2 underline-offset-2 hover:text-charcoal">
-          Volver al horario
+          Volver a reservas
         </Link>
       </div>
       <p className="mb-6 text-sm text-charcoal/50">
