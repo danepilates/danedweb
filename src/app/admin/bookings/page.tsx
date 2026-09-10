@@ -11,16 +11,107 @@ import {
   mondayIndexedWeekday,
   todayISO,
 } from "@/lib/dates";
+import { getEffectivePlanType, type PlanType } from "@/lib/plan";
+
+const MORNING_START_HOUR = 6;
+const MORNING_END_HOUR = 11; // exclusive — 6am through 10am inclusive
 
 const WEEKDAY_HEADERS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
+
+// Free/"diario" clients intentionally get no badge — only paid tiers are
+// flagged so admins can spot who's on a plan at a glance.
+const PLAN_BADGES: Partial<Record<PlanType, { color: string; textColor: string; label: string }>> = {
+  silver: { color: "#C0C0C0", textColor: "#373737", label: "Silver" },
+  gold: { color: "#E0AB20", textColor: "#373737", label: "Gold" },
+  vip: { color: "#8B5CF6", textColor: "#FFFFFF", label: "VIP" },
+};
 
 type BookingRow = {
   id: string;
   session_date: string;
   start_time: string;
   services: { name: string } | null;
-  profiles: { full_name: string | null; phone: string | null } | null;
+  profiles: {
+    full_name: string | null;
+    phone: string | null;
+    plan_type: string | null;
+    plan_end_date: string | null;
+  } | null;
+  effectivePlan: PlanType;
 };
+
+type HourGroup = { hour: number; bookings: BookingRow[] };
+
+function groupByHour(list: BookingRow[]): HourGroup[] {
+  const byHour = new Map<number, BookingRow[]>();
+  for (const b of list) {
+    const hour = Number(b.start_time.slice(0, 2));
+    const group = byHour.get(hour) ?? [];
+    group.push(b);
+    byHour.set(hour, group);
+  }
+  return Array.from(byHour.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([hour, bookings]) => ({ hour, bookings }));
+}
+
+function isMorningHour(hour: number) {
+  return hour >= MORNING_START_HOUR && hour < MORNING_END_HOUR;
+}
+
+function HourScheduleSection({
+  title,
+  groups,
+  cardColor,
+}: {
+  title: string;
+  groups: HourGroup[];
+  cardColor: string;
+}) {
+  return (
+    <div>
+      <h4 className="mb-2 font-serif text-lg font-semibold text-charcoal">{title}</h4>
+      {groups.length === 0 ? (
+        <p className="text-sm text-charcoal/40">Sin reservas.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {groups.map(({ hour, bookings }) => (
+            <div
+              key={hour}
+              className="rounded-lg px-4 py-3"
+              style={{ backgroundColor: cardColor }}
+            >
+              <p className="mb-1 font-medium text-charcoal">
+                {formatTime(`${String(hour).padStart(2, "0")}:00`)}
+              </p>
+              <div className="flex flex-col gap-1 text-sm text-charcoal/70">
+                {bookings.map((b) => {
+                  const badge = PLAN_BADGES[b.effectivePlan];
+                  return (
+                    <span key={b.id} className="flex items-center gap-1.5">
+                      {b.profiles?.full_name ?? "Desconocido"}
+                      {badge && (
+                        <span className="inline-flex items-center gap-1">
+                          <span style={{ color: badge.color }}>★</span>
+                          <span
+                            className="rounded-full px-2 py-0.5 text-xs font-medium"
+                            style={{ backgroundColor: badge.color, color: badge.textColor }}
+                          >
+                            {badge.label}
+                          </span>
+                        </span>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default async function AdminBookingsPage({
   searchParams,
@@ -50,13 +141,18 @@ export default async function AdminBookingsPage({
 
   const { data } = await supabase
     .from("bookings")
-    .select("id, session_date, start_time, services(name), profiles(full_name, phone)")
+    .select(
+      "id, session_date, start_time, services(name), profiles(full_name, phone, plan_type, plan_end_date)",
+    )
     .eq("status", "booked")
     .gte("session_date", monthStart)
     .lte("session_date", monthEnd)
     .order("start_time");
 
-  const bookings = (data ?? []) as unknown as BookingRow[];
+  const bookings = ((data ?? []) as unknown as Omit<BookingRow, "effectivePlan">[]).map((b) => ({
+    ...b,
+    effectivePlan: getEffectivePlanType(b.profiles?.plan_type, b.profiles?.plan_end_date ?? null, today),
+  }));
 
   const byDate = new Map<string, BookingRow[]>();
   for (const b of bookings) {
@@ -161,19 +257,20 @@ export default async function AdminBookingsPage({
           <p className="text-sm text-charcoal/50">No hay reservas ese día.</p>
         )}
 
-        <div className="flex flex-col gap-2">
-          {selectedList.map((b) => (
-            <div key={b.id} className="rounded-lg border border-charcoal/10 px-4 py-3 text-sm">
-              <p className="font-medium text-charcoal">
-                {formatTime(b.start_time)} · {b.services?.name}
-              </p>
-              <p className="text-charcoal/50">
-                {b.profiles?.full_name ?? "Desconocido"}
-                {b.profiles?.phone ? ` · ${b.profiles.phone}` : ""}
-              </p>
-            </div>
-          ))}
-        </div>
+        {selectedDate && selectedList.length > 0 && (
+          <div className="flex flex-col gap-6">
+            <HourScheduleSection
+              title="Mañana"
+              groups={groupByHour(selectedList.filter((b) => isMorningHour(Number(b.start_time.slice(0, 2)))))}
+              cardColor="#FCECFF"
+            />
+            <HourScheduleSection
+              title="Tarde"
+              groups={groupByHour(selectedList.filter((b) => !isMorningHour(Number(b.start_time.slice(0, 2)))))}
+              cardColor="#DAE2FF"
+            />
+          </div>
+        )}
       </section>
     </div>
   );

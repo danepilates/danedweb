@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getEffectivePlanType, planLabel, type PlanType } from "@/lib/plan";
+import { getEffectivePlanType, type PlanType } from "@/lib/plan";
 import { todayISO } from "@/lib/dates";
+import { ClientSearchList } from "@/components/client-search-list";
 
 export default async function AdminClientsPage({
   searchParams,
@@ -86,28 +87,7 @@ export default async function AdminClientsPage({
         })}
       </div>
 
-      <div className="flex flex-col gap-2">
-        {filtered.map((c) => (
-          <Link
-            key={c.id}
-            href={`/admin/clients/${c.id}`}
-            className="flex items-center justify-between rounded-lg border border-charcoal/10 px-4 py-3 text-sm transition-colors hover:border-gold/40"
-          >
-            <span className="flex items-center gap-2 text-charcoal">
-              {c.full_name || "(sin nombre aún)"}
-              {c.effectivePlan !== "free" && (
-                <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-medium text-charcoal">
-                  {planLabel(c.effectivePlan)}
-                </span>
-              )}
-            </span>
-            <span className="text-charcoal/50">@{c.username}</span>
-          </Link>
-        ))}
-        {filtered.length === 0 && (
-          <p className="text-sm text-charcoal/50">No hay clientes en esta vista.</p>
-        )}
-      </div>
+      <ClientSearchList clients={filtered} />
     </div>
   );
 }
