@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { approveBookingRequest, rejectBookingRequest } from "@/lib/actions/admin";
 import {
   addMonthsISO,
   currentMonthISO,
@@ -15,6 +16,7 @@ import { getEffectivePlanType, type PlanType } from "@/lib/plan";
 
 const MORNING_START_HOUR = 6;
 const MORNING_END_HOUR = 11; // exclusive — 6am through 10am inclusive
+const REQUEST_WINDOW_MINUTES = 15;
 
 const WEEKDAY_HEADERS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
 
@@ -31,6 +33,9 @@ type BookingRow = {
   session_date: string;
   start_time: string;
   schedule_slot_id: string;
+  status: string;
+  created_at: string;
+  payment_reported_at: string | null;
   services: { name: string } | null;
   profiles: {
     full_name: string | null;
@@ -78,12 +83,15 @@ function HourScheduleSection({
       ) : (
         <div className="flex flex-col gap-2">
           {groups.map(({ hour, bookings }) => {
+            const confirmed = bookings.filter((b) => b.status === "booked");
+            const pending = bookings.filter((b) => b.status === "pending");
+
             const capacityBySlot = new Map<string, number>();
             for (const b of bookings) {
               capacityBySlot.set(b.schedule_slot_id, b.schedule_slots?.capacity ?? 0);
             }
             const totalCapacity = Array.from(capacityBySlot.values()).reduce((a, c) => a + c, 0);
-            const bookedCount = bookings.length;
+            const bookedCount = confirmed.length;
             const isFull = totalCapacity > 0 && bookedCount >= totalCapacity;
 
             return (
@@ -101,7 +109,7 @@ function HourScheduleSection({
                   </span>
                 </div>
                 <ol className="flex flex-col gap-1 text-sm text-charcoal/70">
-                  {bookings.map((b, i) => {
+                  {confirmed.map((b, i) => {
                     const badge = PLAN_BADGES[b.effectivePlan];
                     return (
                       <li key={b.id} className="flex items-center gap-1.5">
@@ -122,6 +130,51 @@ function HourScheduleSection({
                     );
                   })}
                 </ol>
+
+                {pending.length > 0 && (
+                  <div className="mt-3 border-t border-charcoal/10 pt-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-charcoal/50">
+                      Solicitudes
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {pending.map((b) => (
+                        <div
+                          key={b.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/70 px-3 py-2 text-sm"
+                        >
+                          <span className="flex items-center gap-1.5 text-charcoal">
+                            {b.profiles?.full_name ?? "Desconocido"}
+                            {b.payment_reported_at && (
+                              <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                                Pago reportado
+                              </span>
+                            )}
+                          </span>
+                          <div className="flex gap-1.5">
+                            <form action={approveBookingRequest}>
+                              <input type="hidden" name="id" value={b.id} />
+                              <button
+                                type="submit"
+                                className="min-h-8 rounded-full bg-charcoal px-3 text-xs text-white transition-colors hover:bg-gold hover:text-charcoal"
+                              >
+                                Aprobar
+                              </button>
+                            </form>
+                            <form action={rejectBookingRequest}>
+                              <input type="hidden" name="id" value={b.id} />
+                              <button
+                                type="submit"
+                                className="min-h-8 rounded-full border border-red-300 px-3 text-xs text-red-600 hover:bg-red-50"
+                              >
+                                Rechazar
+                              </button>
+                            </form>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -134,9 +187,9 @@ function HourScheduleSection({
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; date?: string }>;
+  searchParams: Promise<{ month?: string; date?: string; error?: string }>;
 }) {
-  const { month: monthParam, date: dateParam } = await searchParams;
+  const { month: monthParam, date: dateParam, error } = await searchParams;
 
   const supabase = await createClient();
   const {
@@ -151,6 +204,17 @@ export default async function AdminPage({
     .single();
   if (!profile?.is_admin) redirect("/book");
 
+  // Lazy expiry sweep (no cron): any request nobody approved within the
+  // window is flipped to 'rejected' the next time this page loads, so
+  // it stops showing as an actionable "Solicitud" and the client's own
+  // "only one active reservation" check (already time-filtered at the
+  // DB level) stays in sync with what the admin sees.
+  await supabase
+    .from("bookings")
+    .update({ status: "rejected" })
+    .eq("status", "pending")
+    .lt("created_at", new Date(Date.now() - REQUEST_WINDOW_MINUTES * 60 * 1000).toISOString());
+
   const today = todayISO();
   const month = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : currentMonthISO();
   const numDays = daysInMonth(month);
@@ -160,9 +224,9 @@ export default async function AdminPage({
   const { data } = await supabase
     .from("bookings")
     .select(
-      "id, session_date, start_time, schedule_slot_id, services(name), profiles(full_name, phone, plan_type, plan_end_date), schedule_slots(capacity)",
+      "id, session_date, start_time, schedule_slot_id, status, created_at, payment_reported_at, services(name), profiles(full_name, phone, plan_type, plan_end_date), schedule_slots(capacity)",
     )
-    .eq("status", "booked")
+    .in("status", ["booked", "pending"])
     .gte("session_date", monthStart)
     .lte("session_date", monthEnd)
     .order("start_time");
@@ -215,6 +279,12 @@ export default async function AdminPage({
         </div>
       </div>
 
+      {error && (
+        <p className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      )}
+
       <div className="mb-4 flex items-center justify-between">
         <Link
           href={`/admin?month=${prevMonth}`}
@@ -244,7 +314,7 @@ export default async function AdminPage({
       <div className="mb-6 grid grid-cols-7 gap-1">
         {cells.map((date, i) => {
           if (!date) return <div key={i} />;
-          const count = byDate.get(date)?.length ?? 0;
+          const count = byDate.get(date)?.filter((b) => b.status === "booked").length ?? 0;
           const isSelected = date === selectedDate;
           const isToday = date === today;
           const dayNum = Number(date.slice(8, 10));

@@ -91,6 +91,42 @@ export async function deleteScheduleSlot(formData: FormData) {
   revalidatePath("/book");
 }
 
+export async function approveBookingRequest(formData: FormData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  // The capacity trigger still fires on this update, so approving past
+  // a slot that filled up in the meantime correctly fails here.
+  const { error } = await supabase
+    .from("bookings")
+    .update({ status: "booked" })
+    .eq("id", id)
+    .eq("status", "pending");
+
+  revalidatePath("/admin");
+  revalidatePath("/book");
+
+  if (error) {
+    redirect(`/admin?error=${encodeURIComponent(error.message)}`);
+  }
+}
+
+export async function rejectBookingRequest(formData: FormData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await supabase
+    .from("bookings")
+    .update({ status: "rejected" })
+    .eq("id", id)
+    .eq("status", "pending");
+
+  revalidatePath("/admin");
+  revalidatePath("/book");
+}
+
 export async function addCustomField(formData: FormData) {
   const supabase = await requireAdmin();
 

@@ -28,10 +28,13 @@ export default async function MyBookingsPage() {
   const today = todayISO();
   const rows = (bookings ?? []) as unknown as BookingRow[];
   const upcoming = rows.filter(
-    (b) => b.status === "booked" && b.session_date >= today,
+    (b) => (b.status === "booked" || b.status === "pending") && b.session_date >= today,
   );
   const past = rows.filter(
-    (b) => b.status === "cancelled" || b.session_date < today,
+    (b) =>
+      b.status === "cancelled" ||
+      b.status === "rejected" ||
+      (b.session_date < today && b.status !== "pending"),
   );
 
   return (
@@ -57,18 +60,25 @@ export default async function MyBookingsPage() {
                 </p>
                 <p className="text-sm text-charcoal/50">
                   {formatTime(b.start_time)}
+                  {b.status === "pending" && (
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                      Pendiente de pago
+                    </span>
+                  )}
                 </p>
               </div>
-              <form action={cancelBooking}>
-                <input type="hidden" name="bookingId" value={b.id} />
-                <input type="hidden" name="redirectTo" value="/my-bookings" />
-                <button
-                  type="submit"
-                  className="min-h-11 rounded-full border border-charcoal/20 px-4 text-sm text-charcoal hover:border-charcoal hover:bg-charcoal/5"
-                >
-                  Cancelar
-                </button>
-              </form>
+              {b.status === "booked" && (
+                <form action={cancelBooking}>
+                  <input type="hidden" name="bookingId" value={b.id} />
+                  <input type="hidden" name="redirectTo" value="/my-bookings" />
+                  <button
+                    type="submit"
+                    className="min-h-11 rounded-full border border-charcoal/20 px-4 text-sm text-charcoal hover:border-charcoal hover:bg-charcoal/5"
+                  >
+                    Cancelar
+                  </button>
+                </form>
+              )}
             </div>
           ))}
         </div>
@@ -92,7 +102,11 @@ export default async function MyBookingsPage() {
                 <p className="text-sm">{formatTime(b.start_time)}</p>
               </div>
               <span className="text-sm capitalize">
-                {b.status === "cancelled" ? "cancelada" : "reservada"}
+                {b.status === "cancelled"
+                  ? "cancelada"
+                  : b.status === "rejected"
+                    ? "rechazada"
+                    : "reservada"}
               </span>
             </div>
           ))}

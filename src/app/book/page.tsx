@@ -16,6 +16,7 @@ import {
 } from "@/lib/dates";
 import { isProfileComplete, type CustomField, type CustomValue, type Profile } from "@/lib/profile";
 import { getEffectivePlanType, planLabel } from "@/lib/plan";
+import { PendingPaymentModal } from "@/components/pending-payment-modal";
 
 const BOOKING_WINDOW_DAYS = 60;
 
@@ -23,6 +24,9 @@ type ConfirmedBooking = {
   id: string;
   session_date: string;
   start_time: string;
+  status: string;
+  created_at: string;
+  payment_reported_at: string | null;
   services: { name: string } | null;
 };
 
@@ -148,12 +152,14 @@ export default async function BookPage({
   if (confirmedId) {
     const { data } = await supabase
       .from("bookings")
-      .select("id, session_date, start_time, services(name)")
+      .select("id, session_date, start_time, status, created_at, payment_reported_at, services(name)")
       .eq("id", confirmedId)
       .eq("user_id", user.id)
       .single();
     confirmedBooking = data as unknown as ConfirmedBooking | null;
   }
+
+  const firstName = (profile?.full_name ?? "").trim().split(/\s+/)[0] ?? "";
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
@@ -173,7 +179,16 @@ export default async function BookPage({
         )}
       </div>
 
-      {confirmedBooking && (
+      {confirmedBooking && confirmedBooking.status === "pending" && (
+        <PendingPaymentModal
+          bookingId={confirmedBooking.id}
+          firstName={firstName}
+          createdAt={confirmedBooking.created_at}
+          initiallyReported={!!confirmedBooking.payment_reported_at}
+        />
+      )}
+
+      {confirmedBooking && confirmedBooking.status === "booked" && (
         <div className="mb-6 rounded-lg border border-gold/40 bg-gold/10 px-4 py-3">
           <p className="mb-1 font-medium text-charcoal">¡Sesión reservada!</p>
           <p className="mb-3 text-sm text-charcoal/70">

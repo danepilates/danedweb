@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isSlotInPast, todayISO } from "@/lib/dates";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getEffectivePlanType } from "@/lib/plan";
 
 export async function createBooking(formData: FormData) {
   const supabase = await createClient();
@@ -50,6 +51,17 @@ export async function createBooking(formData: FormData) {
     );
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("plan_type, plan_end_date")
+    .eq("id", user.id)
+    .single();
+
+  const effectivePlan = getEffectivePlanType(profile?.plan_type, profile?.plan_end_date ?? null, todayISO());
+
+  // Diario/free-plan clients go through a WhatsApp payment-verification
+  // request instead of confirming instantly — the DB trigger enforces
+  // this doesn't count toward capacity until an admin approves it.
   const { data: inserted, error } = await supabase
     .from("bookings")
     .insert({
@@ -58,6 +70,7 @@ export async function createBooking(formData: FormData) {
       service_id: serviceId,
       session_date: sessionDate,
       start_time: startTime,
+      status: effectivePlan === "free" ? "pending" : "booked",
     })
     .select("id")
     .single();
@@ -75,6 +88,23 @@ export async function createBooking(formData: FormData) {
 
   revalidatePath("/book");
   redirect(`/book?${params.toString()}`);
+}
+
+export async function markPaymentReported(bookingId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase
+    .from("bookings")
+    .update({ payment_reported_at: new Date().toISOString() })
+    .eq("id", bookingId)
+    .eq("user_id", user.id)
+    .eq("status", "pending");
+
+  revalidatePath("/book");
 }
 
 export async function cancelBooking(formData: FormData) {
