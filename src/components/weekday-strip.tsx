@@ -6,10 +6,12 @@ const DAY_LABELS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 export function WeekdayStrip({
+  basePath,
   service,
   selectedDay,
   countByDay,
 }: {
+  basePath: string;
   service: string;
   selectedDay: number;
   countByDay: number[];
@@ -23,7 +25,7 @@ export function WeekdayStrip({
         return (
           <Link
             key={day}
-            href={`/admin?service=${service}&day=${day}`}
+            href={`${basePath}?service=${service}&day=${day}`}
             className={`flex min-w-16 flex-col items-center rounded-lg border px-3 py-2 text-sm transition-colors ${
               isSelected
                 ? "border-charcoal bg-charcoal text-white"

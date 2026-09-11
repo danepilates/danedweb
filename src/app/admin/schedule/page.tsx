@@ -5,8 +5,10 @@ import {
   addScheduleSlot,
   toggleScheduleSlot,
   updateScheduleSlotCapacity,
+  deleteScheduleSlot,
 } from "@/lib/actions/admin";
 import { WeekdayStrip } from "@/components/weekday-strip";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { dayOfWeekFromISO, formatTime, todayISO } from "@/lib/dates";
 
 const DAY_LABELS = [
@@ -103,6 +105,7 @@ export default async function AdminSchedulePage({
       </div>
 
       <WeekdayStrip
+        basePath="/admin/schedule"
         service={selectedService?.slug ?? ""}
         selectedDay={selectedDay}
         countByDay={countByDay}
@@ -153,6 +156,16 @@ export default async function AdminSchedulePage({
                   >
                     {slot.is_active ? "Desactivar" : "Activar"}
                   </button>
+                </form>
+
+                <form action={deleteScheduleSlot}>
+                  <input type="hidden" name="id" value={slot.id} />
+                  <ConfirmSubmitButton
+                    confirmMessage="¿Eliminar este horario? También se eliminarán las reservas (pasadas y futuras) hechas en él."
+                    className="min-h-9 rounded-full border border-red-300 px-3 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Eliminar
+                  </ConfirmSubmitButton>
                 </form>
               </div>
             </div>

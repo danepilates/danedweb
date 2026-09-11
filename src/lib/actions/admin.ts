@@ -77,6 +77,20 @@ export async function updateScheduleSlotCapacity(formData: FormData) {
   revalidatePath("/book");
 }
 
+export async function deleteScheduleSlot(formData: FormData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  // schedule_slots.id cascades to bookings.schedule_slot_id — deleting a
+  // slot also removes every booking (past and future) tied to it.
+  await supabase.from("schedule_slots").delete().eq("id", id);
+
+  revalidatePath("/admin/schedule");
+  revalidatePath("/admin");
+  revalidatePath("/book");
+}
+
 export async function addCustomField(formData: FormData) {
   const supabase = await requireAdmin();
 
