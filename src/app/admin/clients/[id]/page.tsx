@@ -6,12 +6,13 @@ import {
   sendClientPasswordReset,
   deleteClient,
   assignClientPlan,
+  assignCustomPlan,
   revertClientToFree,
 } from "@/lib/actions/admin";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import type { CustomField, CustomValue, Profile } from "@/lib/profile";
 import { USERNAME_PATTERN } from "@/lib/username";
-import { getEffectivePlanType, planLabel, PLAN_CONFIG, type PlanType } from "@/lib/plan";
+import { getEffectivePlanType, planLabel, PLAN_CONFIG } from "@/lib/plan";
 import { formatDateHuman, todayISO } from "@/lib/dates";
 
 export default async function AdminClientDetailPage({
@@ -132,8 +133,8 @@ export default async function AdminClientDetailPage({
 
         {effectivePlan !== "free" && (
           <p className="mb-3 text-sm text-charcoal/50">
-            {client.plan_classes_remaining} de {client.plan_classes_total} clases restantes ·
-            vence el {formatDateHuman(client.plan_end_date!)}
+            {client.plan_classes_remaining} de {client.plan_classes_total} clases restantes
+            {client.plan_end_date ? ` · vence el ${formatDateHuman(client.plan_end_date)}` : ""}
           </p>
         )}
         {effectivePlan === "free" && client.plan_end_date && (
@@ -143,7 +144,7 @@ export default async function AdminClientDetailPage({
         )}
 
         <div className="mb-3 flex flex-col gap-2">
-          {(Object.keys(PLAN_CONFIG) as Exclude<PlanType, "free">[]).map((type) => (
+          {(Object.keys(PLAN_CONFIG) as ("silver" | "gold" | "vip")[]).map((type) => (
             <form key={type} action={assignClientPlan} className="flex flex-wrap items-center gap-2">
               <input type="hidden" name="clientId" value={client.id} />
               <input type="hidden" name="planType" value={type} />
@@ -164,6 +165,29 @@ export default async function AdminClientDetailPage({
               </ConfirmSubmitButton>
             </form>
           ))}
+
+          <form action={assignCustomPlan} className="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="clientId" value={client.id} />
+            <label className="flex items-center gap-1.5 text-sm text-charcoal/70">
+              Sesiones
+              <input
+                type="number"
+                name="classes"
+                min={1}
+                step={1}
+                placeholder="ej. 4"
+                required
+                className="w-20 rounded-lg border border-charcoal/20 px-2 py-1.5 text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
+              />
+            </label>
+            <ConfirmSubmitButton
+              confirmMessage="¿Crear un plan personalizado con el número de sesiones ingresado? Esto reemplaza el plan actual y no tiene fecha de vencimiento — dura hasta que se consuman las sesiones."
+              className="min-h-10 rounded-full border border-charcoal/20 px-3 text-sm text-charcoal hover:border-gold hover:bg-gold/10"
+            >
+              Crear plan personalizado
+            </ConfirmSubmitButton>
+          </form>
+
           {effectivePlan !== "free" && (
             <form action={revertClientToFree}>
               <input type="hidden" name="clientId" value={client.id} />

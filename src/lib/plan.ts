@@ -1,7 +1,7 @@
-export type PlanType = "free" | "silver" | "gold" | "vip";
+export type PlanType = "free" | "silver" | "gold" | "vip" | "custom";
 
 export const PLAN_CONFIG: Record<
-  Exclude<PlanType, "free">,
+  "silver" | "gold" | "vip",
   {
     label: string;
     classes: number;
@@ -15,19 +15,24 @@ export const PLAN_CONFIG: Record<
 
 // A stored paid plan behaves as Free once its period has passed — no
 // batch job needed to "revert" anyone; this is computed at read time,
-// mirroring the DB trigger's own expiry check.
+// mirroring the DB trigger's own expiry check. Custom plans never carry
+// a plan_end_date (they only end when the class balance runs out), so
+// they're exempt from the date check.
 export function getEffectivePlanType(
   storedType: string | null | undefined,
   planEndDate: string | null,
   today: string,
 ): PlanType {
   if (!storedType || storedType === "free") return "free";
+  if (storedType === "custom") return "custom";
   if (!planEndDate || planEndDate < today) return "free";
   return storedType as PlanType;
 }
 
 export function planLabel(type: PlanType): string {
-  return type === "free" ? "Diario" : PLAN_CONFIG[type].label;
+  if (type === "free") return "Diario";
+  if (type === "custom") return "Personalizado";
+  return PLAN_CONFIG[type].label;
 }
 
 export function daysUntil(dateStr: string, today: string): number {

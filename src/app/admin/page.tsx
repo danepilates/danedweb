@@ -26,6 +26,7 @@ const PLAN_BADGES: Partial<Record<PlanType, { color: string; textColor: string; 
   silver: { color: "#C0C0C0", textColor: "#373737", label: "Silver" },
   gold: { color: "#E0AB20", textColor: "#373737", label: "Gold" },
   vip: { color: "#8B5CF6", textColor: "#FFFFFF", label: "VIP" },
+  custom: { color: "#6B9080", textColor: "#FFFFFF", label: "Personalizado" },
 };
 
 type BookingRow = {

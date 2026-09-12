@@ -301,7 +301,7 @@ export async function assignClientPlan(formData: FormData) {
   const planType = String(formData.get("planType") ?? "") as PlanType;
   if (!clientId || !(planType in PLAN_CONFIG)) return;
 
-  const config = PLAN_CONFIG[planType as Exclude<PlanType, "free">];
+  const config = PLAN_CONFIG[planType as "silver" | "gold" | "vip"];
   const requestedStart = String(formData.get("startDate") ?? "");
   const startDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedStart) ? requestedStart : todayISO();
 
@@ -313,6 +313,31 @@ export async function assignClientPlan(formData: FormData) {
       plan_end_date: addDaysISO(startDate, config.periodDays),
       plan_classes_total: config.classes,
       plan_classes_remaining: config.classes,
+    })
+    .eq("id", clientId);
+
+  revalidateClientPlan(clientId);
+  redirect(`/admin/clients/${clientId}?saved=1`);
+}
+
+// For Diario clients who want to pay for more than one session but
+// don't want Gold/VIP — the admin picks the number of sessions directly.
+// Unlike the fixed tiers, a custom plan never expires by date; it only
+// runs out when plan_classes_remaining hits 0.
+export async function assignCustomPlan(formData: FormData) {
+  const supabase = await requireAdmin();
+  const clientId = String(formData.get("clientId") ?? "");
+  const classes = Number(formData.get("classes"));
+  if (!clientId || !Number.isInteger(classes) || classes <= 0) return;
+
+  await supabase
+    .from("profiles")
+    .update({
+      plan_type: "custom",
+      plan_start_date: todayISO(),
+      plan_end_date: null,
+      plan_classes_total: classes,
+      plan_classes_remaining: classes,
     })
     .eq("id", clientId);
 

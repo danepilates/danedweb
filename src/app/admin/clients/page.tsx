@@ -38,7 +38,7 @@ export default async function AdminClientsPage({
       effectivePlan: getEffectivePlanType(c.plan_type, c.plan_end_date, today),
     }));
 
-  const validFilters: PlanType[] = ["free", "silver", "gold", "vip"];
+  const validFilters: PlanType[] = ["free", "silver", "gold", "vip", "custom"];
   const filtered = nonAdminClients.filter((c) =>
     planFilter && validFilters.includes(planFilter as PlanType)
       ? c.effectivePlan === planFilter
@@ -51,6 +51,7 @@ export default async function AdminClientsPage({
     { value: "silver", label: "Silver" },
     { value: "gold", label: "Gold" },
     { value: "vip", label: "VIP" },
+    { value: "custom", label: "Personalizado" },
   ];
 
   return (

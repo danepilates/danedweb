@@ -85,8 +85,12 @@ export default async function ProfilePage({
         {effectivePlan !== "free" && (
           <p className="text-right text-sm text-charcoal/50">
             {profile!.plan_classes_remaining} de {profile!.plan_classes_total} clases
-            <br />
-            vence el {formatDateHuman(profile!.plan_end_date!)}
+            {profile!.plan_end_date && (
+              <>
+                <br />
+                vence el {formatDateHuman(profile!.plan_end_date)}
+              </>
+            )}
           </p>
         )}
       </section>
