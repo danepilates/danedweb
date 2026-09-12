@@ -314,7 +314,9 @@ export default async function AdminPage({
       <div className="mb-6 grid grid-cols-7 gap-1">
         {cells.map((date, i) => {
           if (!date) return <div key={i} />;
-          const count = byDate.get(date)?.filter((b) => b.status === "booked").length ?? 0;
+          const dayBookings = byDate.get(date);
+          const count = dayBookings?.filter((b) => b.status === "booked").length ?? 0;
+          const pendingCount = dayBookings?.filter((b) => b.status === "pending").length ?? 0;
           const isSelected = date === selectedDate;
           const isToday = date === today;
           const dayNum = Number(date.slice(8, 10));
@@ -332,9 +334,10 @@ export default async function AdminPage({
               }`}
             >
               <span>{dayNum}</span>
-              {count > 0 && (
+              {(count > 0 || pendingCount > 0) && (
                 <span className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+                  {count > 0 && <span className="h-1.5 w-1.5 rounded-full bg-gold" />}
+                  {pendingCount > 0 && <span className="h-1.5 w-1.5 rounded-full bg-red-500" />}
                   {count > 1 && (
                     <span className={`text-[10px] ${isSelected ? "text-white/70" : "text-charcoal/50"}`}>
                       +{count}
