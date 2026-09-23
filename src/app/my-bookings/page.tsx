@@ -8,6 +8,7 @@ type BookingRow = {
   session_date: string;
   start_time: string;
   status: string;
+  approval_seen_at: string | null;
   services: { name: string } | null;
 };
 
@@ -20,13 +21,28 @@ export default async function MyBookingsPage() {
 
   const { data: bookings } = await supabase
     .from("bookings")
-    .select("id, session_date, start_time, status, services(name)")
+    .select("id, session_date, start_time, status, approval_seen_at, services(name)")
     .eq("user_id", user.id)
     .order("session_date", { ascending: true })
     .order("start_time", { ascending: true });
 
   const today = todayISO();
   const rows = (bookings ?? []) as unknown as BookingRow[];
+
+  // Notification: this load is the client "seeing" any bookings an
+  // admin approved since their last visit — clear the flag now so the
+  // nav bar's red dot and this card's marker don't persist past this
+  // page view. See migration 0015.
+  const newlyApprovedIds = rows
+    .filter((b) => b.status === "booked" && b.approval_seen_at === null)
+    .map((b) => b.id);
+  if (newlyApprovedIds.length > 0) {
+    await supabase
+      .from("bookings")
+      .update({ approval_seen_at: new Date().toISOString() })
+      .in("id", newlyApprovedIds);
+  }
+  const newlyApproved = new Set(newlyApprovedIds);
   const upcoming = rows.filter(
     (b) => (b.status === "booked" || b.status === "pending") && b.session_date >= today,
   );
@@ -55,7 +71,10 @@ export default async function MyBookingsPage() {
               className="flex items-center justify-between rounded-lg border border-charcoal/10 px-4 py-3 transition-colors hover:border-gold/40"
             >
               <div>
-                <p className="font-medium text-charcoal">
+                <p className="flex items-center gap-1.5 font-medium text-charcoal">
+                  {newlyApproved.has(b.id) && (
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" aria-label="Notificación" />
+                  )}
                   {b.services?.name} — {formatDateDayMonth(b.session_date)}
                 </p>
                 <p className="text-sm text-charcoal/50">
@@ -63,6 +82,11 @@ export default async function MyBookingsPage() {
                   {b.status === "pending" && (
                     <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
                       Pendiente de pago
+                    </span>
+                  )}
+                  {newlyApproved.has(b.id) && (
+                    <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                      ¡Aprobada!
                     </span>
                   )}
                 </p>

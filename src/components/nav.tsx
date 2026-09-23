@@ -12,6 +12,7 @@ export async function Nav() {
   } = await supabase.auth.getUser();
 
   let isAdmin = false;
+  let hasUnseenApproval = false;
   let planWarningDays: number | null = null;
   let planWarningLabel = "";
   if (user) {
@@ -21,6 +22,14 @@ export async function Nav() {
       .eq("id", user.id)
       .single();
     isAdmin = profile?.is_admin ?? false;
+
+    const { count } = await supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("status", "booked")
+      .is("approval_seen_at", null);
+    hasUnseenApproval = (count ?? 0) > 0;
 
     if (profile?.plan_end_date) {
       const today = todayISO();
@@ -47,8 +56,11 @@ export async function Nav() {
       <Link href="/book" className={linkClass}>
         Reservar
       </Link>
-      <Link href="/my-bookings" className={linkClass}>
+      <Link href="/my-bookings" className={`${linkClass} inline-flex items-center gap-1.5`}>
         Mis reservas
+        {hasUnseenApproval && (
+          <span className="h-2 w-2 rounded-full bg-red-500" aria-label="Notificación" />
+        )}
       </Link>
       <Link href="/profile" className={linkClass}>
         Perfil

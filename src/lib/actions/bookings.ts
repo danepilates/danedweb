@@ -62,6 +62,7 @@ export async function createBooking(formData: FormData) {
   // Diario/free-plan clients go through a WhatsApp payment-verification
   // request instead of confirming instantly — the DB trigger enforces
   // this doesn't count toward capacity until an admin approves it.
+  const isFree = effectivePlan === "free";
   const { data: inserted, error } = await supabase
     .from("bookings")
     .insert({
@@ -70,7 +71,12 @@ export async function createBooking(formData: FormData) {
       service_id: serviceId,
       session_date: sessionDate,
       start_time: startTime,
-      status: effectivePlan === "free" ? "pending" : "booked",
+      status: isFree ? "pending" : "booked",
+      // Paid-plan bookings are seen immediately on this page, so they
+      // never need the "approval" notification; Diario ones stay
+      // unseen (null) until an admin approves and the client checks
+      // Mis Reservas — see migration 0015.
+      approval_seen_at: isFree ? null : new Date().toISOString(),
     })
     .select("id")
     .single();
