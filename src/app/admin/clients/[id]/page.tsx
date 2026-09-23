@@ -157,6 +157,14 @@ export default async function AdminClientDetailPage({
                   className="rounded-lg border border-charcoal/20 px-2 py-1.5 text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
                 />
               </label>
+              <label className="flex items-center gap-1.5 text-sm text-charcoal/70">
+                <input
+                  type="checkbox"
+                  name="startedToday"
+                  className="h-4 w-4 rounded border-charcoal/30 text-gold focus:ring-gold"
+                />
+                El usuario empezó hoy
+              </label>
               <ConfirmSubmitButton
                 confirmMessage={`¿Asignar Plan ${PLAN_CONFIG[type].label}? Esto reinicia el saldo a ${PLAN_CONFIG[type].classes} clases y el período a ${PLAN_CONFIG[type].periodDays} días desde la fecha de inicio seleccionada.`}
                 className="min-h-10 rounded-full border border-charcoal/20 px-3 text-sm text-charcoal hover:border-gold hover:bg-gold/10"
@@ -179,6 +187,14 @@ export default async function AdminClientDetailPage({
                 required
                 className="w-20 rounded-lg border border-charcoal/20 px-2 py-1.5 text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
               />
+            </label>
+            <label className="flex items-center gap-1.5 text-sm text-charcoal/70">
+              <input
+                type="checkbox"
+                name="startedToday"
+                className="h-4 w-4 rounded border-charcoal/30 text-gold focus:ring-gold"
+              />
+              El usuario empezó hoy
             </label>
             <ConfirmSubmitButton
               confirmMessage="¿Crear un plan personalizado con el número de sesiones ingresado? Esto reemplaza el plan actual y no tiene fecha de vencimiento — dura hasta que se consuman las sesiones."

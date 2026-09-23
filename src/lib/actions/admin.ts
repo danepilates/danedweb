@@ -304,6 +304,13 @@ export async function assignClientPlan(formData: FormData) {
   const config = PLAN_CONFIG[planType as "silver" | "gold" | "vip"];
   const requestedStart = String(formData.get("startDate") ?? "");
   const startDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedStart) ? requestedStart : todayISO();
+  // "El usuario empezó hoy" — the client already booked a session today
+  // (e.g. under their old free/Diario plan) before this new plan was
+  // assigned. That booking's own trigger never touched the fresh
+  // balance being set below, so this lets the admin manually account
+  // for it by starting one class short instead of a full reset.
+  const startedToday = formData.get("startedToday") === "on";
+  const classesRemaining = startedToday ? Math.max(config.classes - 1, 0) : config.classes;
 
   await supabase
     .from("profiles")
@@ -312,7 +319,7 @@ export async function assignClientPlan(formData: FormData) {
       plan_start_date: startDate,
       plan_end_date: addDaysISO(startDate, config.periodDays),
       plan_classes_total: config.classes,
-      plan_classes_remaining: config.classes,
+      plan_classes_remaining: classesRemaining,
     })
     .eq("id", clientId);
 
@@ -330,6 +337,10 @@ export async function assignCustomPlan(formData: FormData) {
   const classes = Number(formData.get("classes"));
   if (!clientId || !Number.isInteger(classes) || classes <= 0) return;
 
+  // See assignClientPlan for why this exists.
+  const startedToday = formData.get("startedToday") === "on";
+  const classesRemaining = startedToday ? Math.max(classes - 1, 0) : classes;
+
   await supabase
     .from("profiles")
     .update({
@@ -337,7 +348,7 @@ export async function assignCustomPlan(formData: FormData) {
       plan_start_date: todayISO(),
       plan_end_date: null,
       plan_classes_total: classes,
-      plan_classes_remaining: classes,
+      plan_classes_remaining: classesRemaining,
     })
     .eq("id", clientId);
 
