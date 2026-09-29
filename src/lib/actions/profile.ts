@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { parseBirthDate } from "@/lib/dates";
 
 const ALLOWED_AVATAR_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -58,7 +59,7 @@ function parseCoreFields(formData: FormData) {
   return {
     full_name: String(formData.get("fullName") ?? "").trim().slice(0, 200),
     phone: String(formData.get("phone") ?? "").trim().slice(0, 30),
-    age: numberOrNull(formData.get("age")),
+    birth_date: parseBirthDate(formData.get("birthDate")),
     height_cm: numberOrNull(formData.get("heightCm")),
     weight_kg: numberOrNull(formData.get("weightKg")),
     medical_conditions: String(formData.get("medicalConditions") ?? "").trim().slice(0, 2000),
@@ -127,7 +128,8 @@ export async function updateOwnProfile(formData: FormData) {
   await supabase.from("profiles").update(updates).eq("id", user.id);
   await saveCustomValues(supabase, user.id, formData);
 
-  revalidatePath("/profile");
-  revalidatePath("/book");
+  // Whole layout, not just these pages — the nav decides whether to show
+  // the birthday prompt from this profile's data.
+  revalidatePath("/", "layout");
   redirect("/profile?saved=1");
 }

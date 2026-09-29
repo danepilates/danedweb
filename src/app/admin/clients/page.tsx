@@ -27,7 +27,7 @@ export default async function AdminClientsPage({
 
   const { data: clients } = await supabase
     .from("profiles")
-    .select("id, username, full_name, phone, age, is_admin, plan_type, plan_end_date")
+    .select("id, username, full_name, phone, is_admin, plan_type, plan_end_date")
     .order("full_name");
 
   const today = todayISO();

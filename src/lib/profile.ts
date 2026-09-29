@@ -4,7 +4,7 @@ export type Profile = {
   full_name: string | null;
   phone: string | null;
   avatar_url: string | null;
-  age: number | null;
+  birth_date: string | null;
   height_cm: number | null;
   weight_kg: number | null;
   medical_conditions: string | null;
@@ -33,7 +33,7 @@ export type CustomValue = {
 const REQUIRED_CORE_FIELDS: (keyof Profile)[] = [
   "full_name",
   "phone",
-  "age",
+  "birth_date",
   "height_cm",
   "weight_kg",
   "medical_conditions",

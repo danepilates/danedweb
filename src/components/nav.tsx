@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
 import { getEffectivePlanType, planLabel, daysUntil } from "@/lib/plan";
 import { todayISO } from "@/lib/dates";
+import { BirthdayPromptModal } from "@/components/birthday-prompt-modal";
 
 export async function Nav() {
   const supabase = await createClient();
@@ -13,15 +14,17 @@ export async function Nav() {
 
   let isAdmin = false;
   let hasUnseenApproval = false;
+  let needsBirthDate = false;
   let planWarningDays: number | null = null;
   let planWarningLabel = "";
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("is_admin, plan_type, plan_end_date")
+      .select("is_admin, plan_type, plan_end_date, birth_date")
       .eq("id", user.id)
       .single();
     isAdmin = profile?.is_admin ?? false;
+    needsBirthDate = !isAdmin && !!profile && !profile.birth_date;
 
     const { count } = await supabase
       .from("bookings")
@@ -141,6 +144,8 @@ export async function Nav() {
           . Contacta al estudio para renovarlo.
         </div>
       )}
+
+      {needsBirthDate && <BirthdayPromptModal />}
     </header>
   );
 }

@@ -9,6 +9,7 @@ import {
   formatDateHuman,
   formatMonthHuman,
   formatTime,
+  isBirthdayOn,
   mondayIndexedWeekday,
   todayISO,
 } from "@/lib/dates";
@@ -43,12 +44,23 @@ type BookingRow = {
     phone: string | null;
     plan_type: string | null;
     plan_end_date: string | null;
+    birth_date: string | null;
   } | null;
   schedule_slots: { capacity: number } | null;
   effectivePlan: PlanType;
 };
 
 type HourGroup = { hour: number; bookings: BookingRow[] };
+
+function BirthdayIcon({ booking }: { booking: BookingRow }) {
+  const birthDate = booking.profiles?.birth_date;
+  if (!birthDate || !isBirthdayOn(birthDate, booking.session_date)) return null;
+  return (
+    <span role="img" aria-label="Cumpleaños" title="¡Cumpleaños!">
+      🎂
+    </span>
+  );
+}
 
 function groupByHour(list: BookingRow[]): HourGroup[] {
   const byHour = new Map<number, BookingRow[]>();
@@ -127,6 +139,7 @@ function HourScheduleSection({
                             </span>
                           </span>
                         )}
+                        <BirthdayIcon booking={b} />
                       </li>
                     );
                   })}
@@ -145,6 +158,7 @@ function HourScheduleSection({
                         >
                           <span className="flex items-center gap-1.5 text-charcoal">
                             {b.profiles?.full_name ?? "Desconocido"}
+                            <BirthdayIcon booking={b} />
                             {b.payment_reported_at && (
                               <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                                 Pago reportado
@@ -225,7 +239,7 @@ export default async function AdminPage({
   const { data } = await supabase
     .from("bookings")
     .select(
-      "id, session_date, start_time, schedule_slot_id, status, created_at, payment_reported_at, services(name), profiles(full_name, phone, plan_type, plan_end_date), schedule_slots(capacity)",
+      "id, session_date, start_time, schedule_slot_id, status, created_at, payment_reported_at, services(name), profiles(full_name, phone, plan_type, plan_end_date, birth_date), schedule_slots(capacity)",
     )
     .in("status", ["booked", "pending"])
     .gte("session_date", monthStart)

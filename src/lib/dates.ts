@@ -25,6 +25,31 @@ export function todayISO(): string {
   return studioNowParts().date;
 }
 
+export function parseBirthDate(raw: FormDataEntryValue | null): string | null {
+  const value = String(raw ?? "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  if (value < "1900-01-01" || value > todayISO()) return null;
+  return value;
+}
+
+export function ageFromBirthDate(birthDate: string, today: string): number {
+  const [by, bm, bd] = birthDate.split("-").map(Number);
+  const [ty, tm, td] = today.split("-").map(Number);
+  const hadBirthdayThisYear = tm > bm || (tm === bm && td >= bd);
+  return ty - by - (hadBirthdayThisYear ? 0 : 1);
+}
+
+// Feb 29 birthdays fall on Feb 28 in non-leap years.
+export function isBirthdayOn(birthDate: string, date: string): boolean {
+  const birthMonthDay = birthDate.slice(5);
+  const monthDay = date.slice(5);
+  if (birthMonthDay === monthDay) return true;
+  if (birthMonthDay !== "02-29" || monthDay !== "02-28") return false;
+  const year = Number(date.slice(0, 4));
+  const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  return !isLeap;
+}
+
 // A session is no longer bookable once its start time has arrived, for
 // today's date specifically (future dates are never "in the past").
 export function isSlotInPast(sessionDate: string, startTime: string): boolean {

@@ -5,7 +5,7 @@ import { AvatarUploadField } from "@/components/avatar-upload-field";
 import type { CustomField, CustomValue, Profile } from "@/lib/profile";
 import { USERNAME_PATTERN } from "@/lib/username";
 import { getEffectivePlanType, planLabel } from "@/lib/plan";
-import { formatDateHuman, todayISO } from "@/lib/dates";
+import { ageFromBirthDate, formatDateHuman, todayISO } from "@/lib/dates";
 
 export default async function ProfilePage({
   searchParams,
@@ -57,7 +57,7 @@ export default async function ProfilePage({
 
       {required && (
         <p className="mb-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Completa tu perfil antes de reservar una sesión.
+          Completa tu fecha de nacimiento para poder reservar una sesión.
         </p>
       )}
       {saved && (
@@ -154,12 +154,20 @@ export default async function ProfilePage({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <label className="flex flex-col gap-1 text-sm">
-            Edad
+            <span>
+              Fecha de nacimiento
+              {profile?.birth_date && (
+                <span className="text-charcoal/50">
+                  {" "}· {ageFromBirthDate(profile.birth_date, today)} años
+                </span>
+              )}
+            </span>
             <input
-              name="age"
-              type="number"
-              min={1}
-              defaultValue={profile?.age ?? ""}
+              name="birthDate"
+              type="date"
+              min="1900-01-01"
+              max={today}
+              defaultValue={profile?.birth_date ?? ""}
               required
               className="rounded-lg border border-charcoal/20 px-3 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
             />

@@ -13,7 +13,14 @@ import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import type { CustomField, CustomValue, Profile } from "@/lib/profile";
 import { USERNAME_PATTERN } from "@/lib/username";
 import { getEffectivePlanType, planLabel, PLAN_CONFIG } from "@/lib/plan";
-import { formatDateHuman, todayISO } from "@/lib/dates";
+import {
+  ageFromBirthDate,
+  formatDateDayMonth,
+  formatDateHuman,
+  formatTime,
+  isSlotInPast,
+  todayISO,
+} from "@/lib/dates";
 
 export default async function AdminClientDetailPage({
   params,
@@ -64,6 +71,25 @@ export default async function AdminClientDetailPage({
   const valueByField = new Map(
     (customValues ?? []).map((v) => [v.field_id, v.value ?? ""]),
   );
+
+  const { data: bookingRows } = await supabase
+    .from("bookings")
+    .select("id, session_date, start_time, services(name)")
+    .eq("user_id", id)
+    .eq("status", "booked")
+    .order("session_date", { ascending: true })
+    .order("start_time", { ascending: true });
+
+  const bookings = (bookingRows ?? []) as unknown as {
+    id: string;
+    session_date: string;
+    start_time: string;
+    services: { name: string } | null;
+  }[];
+  const upcomingBookings = bookings.filter((b) => !isSlotInPast(b.session_date, b.start_time));
+  const pastBookings = bookings
+    .filter((b) => isSlotInPast(b.session_date, b.start_time))
+    .reverse();
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6">
@@ -132,10 +158,21 @@ export default async function AdminClientDetailPage({
         </div>
 
         {effectivePlan !== "free" && (
-          <p className="mb-3 text-sm text-charcoal/50">
-            {client.plan_classes_remaining} de {client.plan_classes_total} clases restantes
-            {client.plan_end_date ? ` · vence el ${formatDateHuman(client.plan_end_date)}` : ""}
-          </p>
+          <div className="mb-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-charcoal">
+                {client.plan_classes_total} clases
+              </span>
+              <span className="font-medium text-charcoal">
+                Clases restantes: {client.plan_classes_remaining}
+              </span>
+            </div>
+            {client.plan_end_date && (
+              <p className="mt-1 text-sm text-charcoal/50">
+                Vence el {formatDateHuman(client.plan_end_date)}
+              </p>
+            )}
+          </div>
         )}
         {effectivePlan === "free" && client.plan_end_date && (
           <p className="mb-3 text-sm text-charcoal/50">
@@ -218,6 +255,52 @@ export default async function AdminClientDetailPage({
         </div>
       </section>
 
+      <section className="mb-8 rounded-lg border border-charcoal/10 p-4">
+        <h2 className="mb-3 font-serif text-lg font-semibold text-charcoal">Sesiones</h2>
+
+        <h3 className="mb-2 text-sm font-medium text-charcoal/50">
+          Próximas ({upcomingBookings.length})
+        </h3>
+        {upcomingBookings.length === 0 ? (
+          <p className="mb-4 text-sm text-charcoal/40">No tiene sesiones próximas.</p>
+        ) : (
+          <ul className="mb-4 flex flex-col gap-1.5">
+            {upcomingBookings.map((b) => (
+              <li
+                key={b.id}
+                className="flex items-center justify-between rounded-lg border border-charcoal/10 px-3 py-2 text-sm text-charcoal"
+              >
+                <span>
+                  {b.services?.name} — {formatDateDayMonth(b.session_date)}
+                </span>
+                <span className="text-charcoal/60">{formatTime(b.start_time)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <h3 className="mb-2 text-sm font-medium text-charcoal/50">
+          Historial ({pastBookings.length})
+        </h3>
+        {pastBookings.length === 0 ? (
+          <p className="text-sm text-charcoal/40">Aún no tiene sesiones pasadas.</p>
+        ) : (
+          <ul className="flex max-h-72 flex-col gap-1.5 overflow-y-auto">
+            {pastBookings.map((b) => (
+              <li
+                key={b.id}
+                className="flex items-center justify-between rounded-lg border border-charcoal/10 px-3 py-2 text-sm text-charcoal/50"
+              >
+                <span>
+                  {b.services?.name} — {formatDateDayMonth(b.session_date)}
+                </span>
+                <span>{formatTime(b.start_time)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <form action={updateClientProfile} className="flex flex-col gap-5">
         <input type="hidden" name="clientId" value={client.id} />
 
@@ -257,11 +340,20 @@ export default async function AdminClientDetailPage({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <label className="flex flex-col gap-1 text-sm">
-            Edad
+            <span>
+              Fecha de nacimiento
+              {client.birth_date && (
+                <span className="text-charcoal/50">
+                  {" "}· {ageFromBirthDate(client.birth_date, today)} años
+                </span>
+              )}
+            </span>
             <input
-              name="age"
-              type="number"
-              defaultValue={client.age ?? ""}
+              name="birthDate"
+              type="date"
+              min="1900-01-01"
+              max={today}
+              defaultValue={client.birth_date ?? ""}
               className="rounded-lg border border-charcoal/20 px-3 py-2 text-base focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
             />
           </label>
