@@ -10,6 +10,7 @@ import {
   revertClientToFree,
 } from "@/lib/actions/admin";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
+import { RegisterAttendanceForm } from "@/components/register-attendance-form";
 import type { CustomField, CustomValue, Profile } from "@/lib/profile";
 import { USERNAME_PATTERN } from "@/lib/username";
 import { getEffectivePlanType, planLabel, PLAN_CONFIG } from "@/lib/plan";
@@ -27,10 +28,10 @@ export default async function AdminClientDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ saved?: string; reset?: string; error?: string }>;
+  searchParams: Promise<{ saved?: string; reset?: string; error?: string; attended?: string }>;
 }) {
   const { id } = await params;
-  const { saved, reset, error } = await searchParams;
+  const { saved, reset, error, attended } = await searchParams;
 
   const supabase = await createClient();
   const {
@@ -87,6 +88,23 @@ export default async function AdminClientDetailPage({
     services: { name: string } | null;
   }[];
   const upcomingBookings = bookings.filter((b) => !isSlotInPast(b.session_date, b.start_time));
+  const { data: slotRows } = await supabase
+    .from("schedule_slots")
+    .select("id, day_of_week, start_time, services(name)")
+    .eq("is_active", true)
+    .order("start_time");
+  const attendanceSlots = ((slotRows ?? []) as unknown as {
+    id: string;
+    day_of_week: number;
+    start_time: string;
+    services: { name: string } | null;
+  }[]).map((s) => ({
+    id: s.id,
+    day_of_week: s.day_of_week,
+    start_time: s.start_time,
+    serviceName: s.services?.name ?? "",
+  }));
+
   const pastBookings = bookings
     .filter((b) => isSlotInPast(b.session_date, b.start_time))
     .reverse();
@@ -102,6 +120,11 @@ export default async function AdminClientDetailPage({
         </Link>
       </div>
 
+      {attended && (
+        <p className="mb-4 rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+          Asistencia registrada. Se descontó 1 sesión del plan.
+        </p>
+      )}
       {saved && (
         <p className="mb-4 rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
           Guardado.
@@ -257,6 +280,20 @@ export default async function AdminClientDetailPage({
 
       <section className="mb-8 rounded-lg border border-charcoal/10 p-4">
         <h2 className="mb-3 font-serif text-lg font-semibold text-charcoal">Sesiones</h2>
+
+        {effectivePlan !== "free" && (
+          <div className="mb-4 rounded-lg bg-gold/5 p-3">
+            <p className="mb-2 text-sm text-charcoal/70">
+              ¿Vino sin reservar? Registra su asistencia y se descontará 1 sesión de su plan.
+            </p>
+            <RegisterAttendanceForm
+              clientId={client.id}
+              clientName={client.full_name || "este cliente"}
+              slots={attendanceSlots}
+              today={today}
+            />
+          </div>
+        )}
 
         <h3 className="mb-2 text-sm font-medium text-charcoal/50">
           Próximas ({upcomingBookings.length})

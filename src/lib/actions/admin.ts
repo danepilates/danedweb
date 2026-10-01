@@ -5,9 +5,9 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
-import { addDaysISO, parseBirthDate, todayISO } from "@/lib/dates";
+import { addDaysISO, dayOfWeekFromISO, parseBirthDate, todayISO } from "@/lib/dates";
 import { translateAuthError } from "@/lib/supabase-error";
-import { PLAN_CONFIG, type PlanType } from "@/lib/plan";
+import { getEffectivePlanType, PLAN_CONFIG, type PlanType } from "@/lib/plan";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -354,6 +354,67 @@ export async function assignCustomPlan(formData: FormData) {
 
   revalidateClientPlan(clientId);
   redirect(`/admin/clients/${clientId}?saved=1`);
+}
+
+// For paid-plan clients who attended a session without booking it. Creates
+// a real 'booked' row on their behalf (see migration 0017) so the DB
+// triggers deduct the class, enforce the plan rules, and count capacity.
+export async function registerAttendance(formData: FormData) {
+  const supabase = await requireAdmin();
+  const clientId = String(formData.get("clientId") ?? "");
+  const scheduleSlotId = String(formData.get("scheduleSlotId") ?? "");
+  const sessionDate = String(formData.get("sessionDate") ?? "");
+  if (!clientId) return;
+
+  const fail = (message: string) =>
+    redirect(`/admin/clients/${clientId}?error=${encodeURIComponent(message)}`);
+
+  if (!scheduleSlotId || !/^\d{4}-\d{2}-\d{2}$/.test(sessionDate)) {
+    fail("Selecciona la fecha y el horario de la sesión");
+  }
+  if (sessionDate > todayISO()) {
+    fail("Solo puedes registrar asistencia de hoy o de días anteriores");
+  }
+
+  const { data: client } = await supabase
+    .from("profiles")
+    .select("plan_type, plan_end_date")
+    .eq("id", clientId)
+    .single();
+  if (getEffectivePlanType(client?.plan_type, client?.plan_end_date ?? null, todayISO()) === "free") {
+    fail("Solo se puede registrar asistencia a clientes con un plan activo");
+  }
+
+  const { data: slot } = await supabase
+    .from("schedule_slots")
+    .select("id, service_id, start_time, day_of_week")
+    .eq("id", scheduleSlotId)
+    .single();
+  if (!slot || slot.day_of_week !== dayOfWeekFromISO(sessionDate)) {
+    fail("Ese horario no corresponde a la fecha seleccionada");
+  }
+
+  const { error } = await supabase.from("bookings").insert({
+    user_id: clientId,
+    schedule_slot_id: slot!.id,
+    service_id: slot!.service_id,
+    session_date: sessionDate,
+    start_time: slot!.start_time,
+    status: "booked",
+    // Registered by the admin — nothing for the client to be notified of.
+    approval_seen_at: new Date().toISOString(),
+  });
+
+  if (error) {
+    // Plan/capacity trigger messages are already in Spanish; the unique
+    // index on active bookings is the one raw Postgres error to translate.
+    fail(error.code === "23505" ? "El cliente ya tiene registrada esa sesión" : error.message);
+  }
+
+  revalidateClientPlan(clientId);
+  revalidatePath("/admin");
+  revalidatePath("/my-bookings");
+  redirect(`/admin/clients/${clientId}?attended=1`);
 }
 
 export async function revertClientToFree(formData: FormData) {
