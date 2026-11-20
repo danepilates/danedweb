@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
-import { addDaysISO, dayOfWeekFromISO, parseBirthDate, todayISO } from "@/lib/dates";
+import { addDaysISO, dayOfWeekFromISO, isSlotInPast, parseBirthDate, todayISO } from "@/lib/dates";
 import { translateAuthError } from "@/lib/supabase-error";
 import { getEffectivePlanType, PLAN_CONFIG, type PlanType } from "@/lib/plan";
 
@@ -415,6 +415,88 @@ export async function registerAttendance(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/my-bookings");
   redirect(`/admin/clients/${clientId}?attended=1`);
+}
+
+// Books a session for someone without an account (see migration 0018).
+// Plan rules don't apply, but the capacity trigger still does.
+export async function createGuestBooking(formData: FormData) {
+  const supabase = await requireAdmin();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const guestName = String(formData.get("guestName") ?? "").trim().slice(0, 100);
+  const scheduleSlotId = String(formData.get("scheduleSlotId") ?? "");
+  const sessionDate = String(formData.get("sessionDate") ?? "");
+  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(sessionDate);
+
+  const back = (params: Record<string, string>) =>
+    redirect(
+      `/admin?${new URLSearchParams(
+        validDate ? { month: sessionDate.slice(0, 7), date: sessionDate, ...params } : params,
+      )}`,
+    );
+
+  if (!validDate || !scheduleSlotId) back({ error: "Selecciona el horario de la sesión" });
+  if (!guestName) back({ error: "Escribe el nombre de la persona" });
+
+  const { data: slot } = await supabase
+    .from("schedule_slots")
+    .select("id, service_id, start_time, day_of_week")
+    .eq("id", scheduleSlotId)
+    .single();
+  if (!slot || slot.day_of_week !== dayOfWeekFromISO(sessionDate)) {
+    back({ error: "Ese horario no corresponde a la fecha seleccionada" });
+  }
+  if (isSlotInPast(sessionDate, slot!.start_time)) {
+    back({ error: "Esta sesión ya comenzó" });
+  }
+
+  const { data: blocked } = await supabase
+    .from("blocked_dates")
+    .select("id")
+    .eq("date", sessionDate)
+    .maybeSingle();
+  if (blocked) back({ error: "El estudio está cerrado en esta fecha" });
+
+  const { error } = await supabase.from("bookings").insert({
+    user_id: null,
+    guest_name: guestName,
+    created_by: user!.id,
+    schedule_slot_id: slot!.id,
+    service_id: slot!.service_id,
+    session_date: sessionDate,
+    start_time: slot!.start_time,
+    status: "booked",
+    approval_seen_at: new Date().toISOString(),
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/book");
+  // The capacity trigger's "session full" message is already in Spanish.
+  back(error ? { error: error.message } : {});
+}
+
+export async function cancelGuestBooking(formData: FormData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const sessionDate = String(formData.get("sessionDate") ?? "");
+
+  if (id) {
+    await supabase
+      .from("bookings")
+      .update({ status: "cancelled" })
+      .eq("id", id)
+      .is("user_id", null);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/book");
+  redirect(
+    /^\d{4}-\d{2}-\d{2}$/.test(sessionDate)
+      ? `/admin?month=${sessionDate.slice(0, 7)}&date=${sessionDate}`
+      : "/admin",
+  );
 }
 
 export async function revertClientToFree(formData: FormData) {

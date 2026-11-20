@@ -1,15 +1,23 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { approveBookingRequest, rejectBookingRequest } from "@/lib/actions/admin";
+import {
+  approveBookingRequest,
+  cancelGuestBooking,
+  createGuestBooking,
+  rejectBookingRequest,
+} from "@/lib/actions/admin";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import {
   addMonthsISO,
   currentMonthISO,
+  dayOfWeekFromISO,
   daysInMonth,
   formatDateHuman,
   formatMonthHuman,
   formatTime,
   isBirthdayOn,
+  isSlotInPast,
   mondayIndexedWeekday,
   todayISO,
 } from "@/lib/dates";
@@ -38,6 +46,7 @@ type BookingRow = {
   status: string;
   created_at: string;
   payment_reported_at: string | null;
+  guest_name: string | null;
   services: { name: string } | null;
   profiles: {
     full_name: string | null;
@@ -123,11 +132,28 @@ function HourScheduleSection({
                 </div>
                 <ol className="flex flex-col gap-1 text-sm text-charcoal/70">
                   {confirmed.map((b, i) => {
-                    const badge = PLAN_BADGES[b.effectivePlan];
+                    const badge = b.guest_name ? undefined : PLAN_BADGES[b.effectivePlan];
                     return (
-                      <li key={b.id} className="flex items-center gap-1.5">
+                      <li key={b.id} className="flex flex-wrap items-center gap-1.5">
                         <span className="text-charcoal/40">{i + 1}.</span>
-                        {b.profiles?.full_name ?? "Desconocido"}
+                        {b.guest_name ?? b.profiles?.full_name ?? "Desconocido"}
+                        {b.guest_name && (
+                          <>
+                            <span className="rounded-full border border-charcoal/30 bg-white px-2 py-0.5 text-xs font-medium text-charcoal">
+                              Reserva del estudio
+                            </span>
+                            <form action={cancelGuestBooking} className="ml-auto">
+                              <input type="hidden" name="id" value={b.id} />
+                              <input type="hidden" name="sessionDate" value={b.session_date} />
+                              <ConfirmSubmitButton
+                                confirmMessage={`¿Cancelar la reserva de ${b.guest_name}?`}
+                                className="text-xs text-red-600 underline underline-offset-2 hover:text-red-700"
+                              >
+                                Cancelar
+                              </ConfirmSubmitButton>
+                            </form>
+                          </>
+                        )}
                         {badge && (
                           <span className="inline-flex items-center gap-1">
                             <span style={{ color: badge.color }}>★</span>
@@ -239,7 +265,7 @@ export default async function AdminPage({
   const { data } = await supabase
     .from("bookings")
     .select(
-      "id, session_date, start_time, schedule_slot_id, status, created_at, payment_reported_at, services(name), profiles(full_name, phone, plan_type, plan_end_date, birth_date), schedule_slots(capacity)",
+      "id, session_date, start_time, schedule_slot_id, status, created_at, payment_reported_at, guest_name, services(name), profiles(full_name, phone, plan_type, plan_end_date, birth_date), schedule_slots(capacity)",
     )
     .in("status", ["booked", "pending"])
     .gte("session_date", monthStart)
@@ -271,6 +297,29 @@ export default async function AdminPage({
   const prevMonth = addMonthsISO(month, -1);
   const nextMonth = addMonthsISO(month, 1);
   const selectedList = selectedDate ? (byDate.get(selectedDate) ?? []) : [];
+
+  const canBookGuest = !!selectedDate && /^\d{4}-\d{2}-\d{2}$/.test(selectedDate) && selectedDate >= today;
+  let guestSlots: { id: string; start_time: string; serviceName: string }[] = [];
+  let selectedDateBlocked = false;
+  if (canBookGuest) {
+    const [{ data: slotRows }, { data: blocked }] = await Promise.all([
+      supabase
+        .from("schedule_slots")
+        .select("id, start_time, services(name)")
+        .eq("day_of_week", dayOfWeekFromISO(selectedDate))
+        .eq("is_active", true)
+        .order("start_time"),
+      supabase.from("blocked_dates").select("id").eq("date", selectedDate).maybeSingle(),
+    ]);
+    selectedDateBlocked = !!blocked;
+    guestSlots = ((slotRows ?? []) as unknown as {
+      id: string;
+      start_time: string;
+      services: { name: string } | null;
+    }[])
+      .filter((s) => !isSlotInPast(selectedDate, s.start_time))
+      .map((s) => ({ id: s.id, start_time: s.start_time, serviceName: s.services?.name ?? "" }));
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
@@ -369,6 +418,46 @@ export default async function AdminPage({
         <h3 className="mb-3 text-sm font-medium text-charcoal/50">
           {selectedDate ? formatDateHuman(selectedDate) : "Selecciona una fecha"}
         </h3>
+
+        {canBookGuest && !selectedDateBlocked && guestSlots.length > 0 && (
+          <form
+            action={createGuestBooking}
+            className="mb-6 flex flex-col gap-2 rounded-lg border border-charcoal/10 p-3"
+          >
+            <p className="text-sm font-medium text-charcoal">Reservar para otra persona</p>
+            <p className="text-xs text-charcoal/50">
+              Para quienes no tienen cuenta. No descuenta sesiones de ningún plan, pero ocupa un cupo.
+            </p>
+            <input type="hidden" name="sessionDate" value={selectedDate} />
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                name="guestName"
+                required
+                maxLength={100}
+                placeholder="Nombre de la persona"
+                className="min-w-0 flex-1 rounded-lg border border-charcoal/20 px-3 py-1.5 text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
+              />
+              <select
+                name="scheduleSlotId"
+                required
+                className="rounded-lg border border-charcoal/20 px-2 py-1.5 text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
+              >
+                {guestSlots.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {formatTime(s.start_time)} · {s.serviceName}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                className="min-h-9 rounded-full bg-charcoal px-4 text-sm text-white transition-colors hover:bg-gold hover:text-charcoal"
+              >
+                Reservar
+              </button>
+            </div>
+          </form>
+        )}
 
         {selectedDate && selectedList.length === 0 && (
           <p className="text-sm text-charcoal/50">No hay reservas ese día.</p>
