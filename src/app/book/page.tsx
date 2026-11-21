@@ -6,6 +6,7 @@ import { createBooking, cancelBooking } from "@/lib/actions/bookings";
 import { BookingCalendar } from "@/components/booking-calendar";
 import {
   addDaysISO,
+  BOOKING_WINDOW_DAYS,
   currentMonthISO,
   daysInMonth,
   dayOfWeekFromISO,
@@ -17,8 +18,6 @@ import {
 import { isProfileComplete, type CustomField, type CustomValue, type Profile } from "@/lib/profile";
 import { getEffectivePlanType, planLabel } from "@/lib/plan";
 import { PendingPaymentModal } from "@/components/pending-payment-modal";
-
-const BOOKING_WINDOW_DAYS = 60;
 
 type ConfirmedBooking = {
   id: string;

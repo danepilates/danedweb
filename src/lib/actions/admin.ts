@@ -5,9 +5,9 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
-import { addDaysISO, dayOfWeekFromISO, isSlotInPast, parseBirthDate, todayISO } from "@/lib/dates";
+import { addDaysISO, BOOKING_WINDOW_DAYS, dayOfWeekFromISO, isSlotInPast, parseBirthDate, todayISO } from "@/lib/dates";
 import { translateAuthError } from "@/lib/supabase-error";
-import { getEffectivePlanType, PLAN_CONFIG, type PlanType } from "@/lib/plan";
+import { PLAN_CONFIG, type PlanType } from "@/lib/plan";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -356,11 +356,18 @@ export async function assignCustomPlan(formData: FormData) {
   redirect(`/admin/clients/${clientId}?saved=1`);
 }
 
-// For paid-plan clients who attended a session without booking it. Creates
-// a real 'booked' row on their behalf (see migration 0017) so the DB
-// triggers deduct the class, enforce the plan rules, and count capacity.
-export async function registerAttendance(formData: FormData) {
+// The admin books a session on a client's behalf — a future booking for a
+// client who can't use the app, or a past/today one to record that they
+// attended without booking. It's the client's own row, so the DB triggers
+// treat it like their booking: paid plans deduct a session and keep the
+// one-per-day rule; Diario clients skip the one-active-reservation limit
+// and the payment request, since the studio collected payment in person
+// (see migrations 0017 and 0019).
+export async function bookForClient(formData: FormData) {
   const supabase = await requireAdmin();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const clientId = String(formData.get("clientId") ?? "");
   const scheduleSlotId = String(formData.get("scheduleSlotId") ?? "");
   const sessionDate = String(formData.get("sessionDate") ?? "");
@@ -372,18 +379,16 @@ export async function registerAttendance(formData: FormData) {
   if (!scheduleSlotId || !/^\d{4}-\d{2}-\d{2}$/.test(sessionDate)) {
     fail("Selecciona la fecha y el horario de la sesión");
   }
-  if (sessionDate > todayISO()) {
-    fail("Solo puedes registrar asistencia de hoy o de días anteriores");
+  if (sessionDate > addDaysISO(todayISO(), BOOKING_WINDOW_DAYS)) {
+    fail(`Solo se puede reservar hasta ${BOOKING_WINDOW_DAYS} días por adelantado`);
   }
 
-  const { data: client } = await supabase
-    .from("profiles")
-    .select("plan_type, plan_end_date")
-    .eq("id", clientId)
-    .single();
-  if (getEffectivePlanType(client?.plan_type, client?.plan_end_date ?? null, todayISO()) === "free") {
-    fail("Solo se puede registrar asistencia a clientes con un plan activo");
-  }
+  const { data: blocked } = await supabase
+    .from("blocked_dates")
+    .select("id")
+    .eq("date", sessionDate)
+    .maybeSingle();
+  if (blocked) fail("El estudio está cerrado en esta fecha");
 
   const { data: slot } = await supabase
     .from("schedule_slots")
@@ -401,20 +406,22 @@ export async function registerAttendance(formData: FormData) {
     session_date: sessionDate,
     start_time: slot!.start_time,
     status: "booked",
-    // Registered by the admin — nothing for the client to be notified of.
+    created_by: user!.id,
+    // Booked by the admin — no "approved" notification for the client.
     approval_seen_at: new Date().toISOString(),
   });
 
   if (error) {
     // Plan/capacity trigger messages are already in Spanish; the unique
     // index on active bookings is the one raw Postgres error to translate.
-    fail(error.code === "23505" ? "El cliente ya tiene registrada esa sesión" : error.message);
+    fail(error.code === "23505" ? "El cliente ya tiene una reserva en esa sesión" : error.message);
   }
 
   revalidateClientPlan(clientId);
   revalidatePath("/admin");
+  revalidatePath("/book");
   revalidatePath("/my-bookings");
-  redirect(`/admin/clients/${clientId}?attended=1`);
+  redirect(`/admin/clients/${clientId}?booked=1`);
 }
 
 // Books a session for someone without an account (see migration 0018).

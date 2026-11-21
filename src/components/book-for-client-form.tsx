@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { registerAttendance } from "@/lib/actions/admin";
+import { bookForClient } from "@/lib/actions/admin";
 import { dayOfWeekFromISO, formatTime } from "@/lib/dates";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 
@@ -12,22 +12,26 @@ type Slot = {
   serviceName: string;
 };
 
-export function RegisterAttendanceForm({
+export function BookForClientForm({
   clientId,
   clientName,
   slots,
   today,
+  maxDate,
+  deductsSession,
 }: {
   clientId: string;
   clientName: string;
   slots: Slot[];
   today: string;
+  maxDate: string;
+  deductsSession: boolean;
 }) {
   const [date, setDate] = useState(today);
   const slotsForDay = date ? slots.filter((s) => s.day_of_week === dayOfWeekFromISO(date)) : [];
 
   return (
-    <form action={registerAttendance} className="flex flex-col gap-2">
+    <form action={bookForClient} className="flex flex-col gap-2">
       <input type="hidden" name="clientId" value={clientId} />
       <div className="flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-1.5 text-sm text-charcoal/70">
@@ -36,7 +40,7 @@ export function RegisterAttendanceForm({
             type="date"
             name="sessionDate"
             value={date}
-            max={today}
+            max={maxDate}
             onChange={(e) => setDate(e.target.value)}
             required
             className="rounded-lg border border-charcoal/20 px-2 py-1.5 text-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
@@ -65,10 +69,14 @@ export function RegisterAttendanceForm({
       </div>
       <div>
         <ConfirmSubmitButton
-          confirmMessage={`¿Registrar la asistencia de ${clientName}? Se descontará 1 sesión de su plan.`}
+          confirmMessage={
+            deductsSession
+              ? `¿Reservar esta sesión para ${clientName}? Se descontará 1 sesión de su plan.`
+              : `¿Reservar esta sesión para ${clientName}? Quedará confirmada directamente, sin solicitud de pago.`
+          }
           className="min-h-10 rounded-full border border-charcoal/20 px-3 text-sm text-charcoal hover:border-gold hover:bg-gold/10"
         >
-          Registrar asistencia
+          Reservar para este cliente
         </ConfirmSubmitButton>
       </div>
     </form>

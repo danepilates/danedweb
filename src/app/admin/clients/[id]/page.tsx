@@ -10,12 +10,14 @@ import {
   revertClientToFree,
 } from "@/lib/actions/admin";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
-import { RegisterAttendanceForm } from "@/components/register-attendance-form";
+import { BookForClientForm } from "@/components/book-for-client-form";
 import type { CustomField, CustomValue, Profile } from "@/lib/profile";
 import { USERNAME_PATTERN } from "@/lib/username";
 import { getEffectivePlanType, planLabel, PLAN_CONFIG } from "@/lib/plan";
 import {
+  addDaysISO,
   ageFromBirthDate,
+  BOOKING_WINDOW_DAYS,
   formatDateDayMonth,
   formatDateHuman,
   formatTime,
@@ -28,10 +30,10 @@ export default async function AdminClientDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ saved?: string; reset?: string; error?: string; attended?: string }>;
+  searchParams: Promise<{ saved?: string; reset?: string; error?: string; booked?: string }>;
 }) {
   const { id } = await params;
-  const { saved, reset, error, attended } = await searchParams;
+  const { saved, reset, error, booked } = await searchParams;
 
   const supabase = await createClient();
   const {
@@ -120,9 +122,9 @@ export default async function AdminClientDetailPage({
         </Link>
       </div>
 
-      {attended && (
+      {booked && (
         <p className="mb-4 rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-          Asistencia registrada. Se descontó 1 sesión del plan.
+          Reserva creada a nombre de {client.full_name || "el cliente"}.
         </p>
       )}
       {saved && (
@@ -281,19 +283,23 @@ export default async function AdminClientDetailPage({
       <section className="mb-8 rounded-lg border border-charcoal/10 p-4">
         <h2 className="mb-3 font-serif text-lg font-semibold text-charcoal">Sesiones</h2>
 
-        {effectivePlan !== "free" && (
-          <div className="mb-4 rounded-lg bg-gold/5 p-3">
-            <p className="mb-2 text-sm text-charcoal/70">
-              ¿Vino sin reservar? Registra su asistencia y se descontará 1 sesión de su plan.
-            </p>
-            <RegisterAttendanceForm
-              clientId={client.id}
-              clientName={client.full_name || "este cliente"}
-              slots={attendanceSlots}
-              today={today}
-            />
-          </div>
-        )}
+        <div className="mb-4 rounded-lg bg-gold/5 p-3">
+          <p className="mb-2 text-sm text-charcoal/70">
+            Reserva una sesión a nombre de este cliente: una fecha futura si te pidió que lo
+            reserves, o una pasada si vino sin reservar.{" "}
+            {effectivePlan !== "free"
+              ? "Cada reserva descuenta 1 sesión de su plan."
+              : "Como está en el plan Diario, queda confirmada directamente sin solicitud de pago."}
+          </p>
+          <BookForClientForm
+            clientId={client.id}
+            clientName={client.full_name || "este cliente"}
+            slots={attendanceSlots}
+            today={today}
+            maxDate={addDaysISO(today, BOOKING_WINDOW_DAYS)}
+            deductsSession={effectivePlan !== "free"}
+          />
+        </div>
 
         <h3 className="mb-2 text-sm font-medium text-charcoal/50">
           Próximas ({upcomingBookings.length})

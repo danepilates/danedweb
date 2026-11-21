@@ -1,4 +1,6 @@
-const DAY_LABELS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+export const BOOKING_WINDOW_DAYS = 60;
+
+const DAY_LABELS =["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 
 function studioNowParts(): { date: string; time: string } {
   const timeZone = process.env.STUDIO_TIMEZONE || "UTC";
