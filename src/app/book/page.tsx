@@ -7,6 +7,7 @@ import { BookingCalendar } from "@/components/booking-calendar";
 import {
   addDaysISO,
   BOOKING_WINDOW_DAYS,
+  canStillCancel,
   currentMonthISO,
   daysInMonth,
   dayOfWeekFromISO,
@@ -281,7 +282,11 @@ export default async function BookPage({
                   </p>
                 </div>
 
-                {myBooking ? (
+                {myBooking && !canStillCancel(selectedDate, slot.start_time) ? (
+                  <span className="max-w-32 text-right text-xs text-charcoal/40">
+                    Reservada · ya no se puede cancelar
+                  </span>
+                ) : myBooking ? (
                   <form action={cancelBooking}>
                     <input type="hidden" name="bookingId" value={myBooking.id} />
                     <input type="hidden" name="serviceSlug" value={selectedService?.slug} />

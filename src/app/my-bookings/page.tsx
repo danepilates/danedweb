@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { cancelBooking } from "@/lib/actions/bookings";
-import { formatDateDayMonth, formatTime, todayISO } from "@/lib/dates";
+import { canStillCancel, formatDateDayMonth, formatTime, todayISO } from "@/lib/dates";
 
 type BookingRow = {
   id: string;
@@ -12,7 +12,12 @@ type BookingRow = {
   services: { name: string } | null;
 };
 
-export default async function MyBookingsPage() {
+export default async function MyBookingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -55,9 +60,18 @@ export default async function MyBookingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
-      <h1 className="mb-6 font-serif text-3xl font-semibold text-charcoal">
+      <h1 className="mb-2 font-serif text-3xl font-semibold text-charcoal">
         Mis reservas
       </h1>
+      <p className="mb-6 text-sm text-charcoal/50">
+        Puedes cancelar una reserva hasta 1 hora antes de la sesión.
+      </p>
+
+      {error && (
+        <p className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      )}
 
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-medium text-charcoal/50">Próximas</h2>
@@ -91,18 +105,23 @@ export default async function MyBookingsPage() {
                   )}
                 </p>
               </div>
-              {b.status === "booked" && (
-                <form action={cancelBooking}>
-                  <input type="hidden" name="bookingId" value={b.id} />
-                  <input type="hidden" name="redirectTo" value="/my-bookings" />
-                  <button
-                    type="submit"
-                    className="min-h-11 rounded-full border border-charcoal/20 px-4 text-sm text-charcoal hover:border-charcoal hover:bg-charcoal/5"
-                  >
-                    Cancelar
-                  </button>
-                </form>
-              )}
+              {b.status === "booked" &&
+                (canStillCancel(b.session_date, b.start_time) ? (
+                  <form action={cancelBooking}>
+                    <input type="hidden" name="bookingId" value={b.id} />
+                    <input type="hidden" name="redirectTo" value="/my-bookings" />
+                    <button
+                      type="submit"
+                      className="min-h-11 rounded-full border border-charcoal/20 px-4 text-sm text-charcoal hover:border-charcoal hover:bg-charcoal/5"
+                    >
+                      Cancelar
+                    </button>
+                  </form>
+                ) : (
+                  <span className="max-w-32 text-right text-xs text-charcoal/40">
+                    Ya no se puede cancelar
+                  </span>
+                ))}
             </div>
           ))}
         </div>

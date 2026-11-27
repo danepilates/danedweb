@@ -52,6 +52,22 @@ export function isBirthdayOn(birthDate: string, date: string): boolean {
   return !isLeap;
 }
 
+export const CANCEL_CUTOFF_MINUTES = 60;
+
+function toStudioMinutes(date: string, time: string): number {
+  const [y, m, d] = date.split("-").map(Number);
+  const [hh, mm] = time.split(":").map(Number);
+  return Date.UTC(y, m - 1, d) / 60000 + hh * 60 + mm;
+}
+
+// Mirrors the enforce_cancel_window DB trigger (migration 0020).
+export function canStillCancel(sessionDate: string, startTime: string): boolean {
+  const now = studioNowParts();
+  const minutesUntilStart =
+    toStudioMinutes(sessionDate, startTime) - toStudioMinutes(now.date, now.time);
+  return minutesUntilStart > CANCEL_CUTOFF_MINUTES;
+}
+
 // A session is no longer bookable once its start time has arrived, for
 // today's date specifically (future dates are never "in the past").
 export function isSlotInPast(sessionDate: string, startTime: string): boolean {

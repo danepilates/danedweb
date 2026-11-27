@@ -125,7 +125,9 @@ export async function cancelBooking(formData: FormData) {
   const sessionDate = String(formData.get("sessionDate") ?? "");
   const redirectTo = String(formData.get("redirectTo") ?? "/book");
 
-  await supabase
+  // The enforce_cancel_window trigger refuses cancellations within 1 hour
+  // of the session; its message is already in Spanish.
+  const { error } = await supabase
     .from("bookings")
     .update({ status: "cancelled" })
     .eq("id", bookingId)
@@ -135,12 +137,13 @@ export async function cancelBooking(formData: FormData) {
   revalidatePath("/my-bookings");
 
   if (redirectTo === "/my-bookings") {
-    redirect("/my-bookings");
+    redirect(error ? `/my-bookings?error=${encodeURIComponent(error.message)}` : "/my-bookings");
   }
   const params = new URLSearchParams({
     service: serviceSlug,
     month: sessionDate.slice(0, 7),
     date: sessionDate,
   });
+  if (error) params.set("error", error.message);
   redirect(`/book?${params.toString()}`);
 }
